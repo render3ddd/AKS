@@ -160,6 +160,22 @@ inline bool Lenstra (const ZZ& n) {
         r = r + 1;
     }
 
+    if (IsZero(r1)) {
+        // The search reached r = n without choosing an r, and gcd(a, n) = 1
+        // for every 2 <= a < n, so n is prime (AKS step: "if n <= r, output
+        // PRIME"). Previously r1 stayed 0 and was passed on as r = 0.
+        auto finish = std::chrono::high_resolution_clock::now();
+        auto duration = finish - start;
+        auto time = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+
+        std::printf("%ld is prime.\n",to_long(n));
+        std::printf("Time taken: %lld milliseconds\n", time);
+
+        fileWrite(n, ncores, true, time, "no r < n found; all a < n coprime to n");
+
+        return true;
+    }
+
     r = r1;
     std::printf("r = %ld\n",to_long(r));
 

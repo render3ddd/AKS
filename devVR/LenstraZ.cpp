@@ -15,10 +15,11 @@
 #include <string>
 #include <thread>
 #include <array>
+#include <cstring>
 
 #include "PerfectPower.h" //Each Independent Test
 #include "Euler.h"
-// #include "Carmichael.h"
+#include "Carmichael.h"
 #include "CongruenceZ.h"
 
 #include "NTL/ZZ.h" // NTL Libraries
@@ -69,6 +70,13 @@ std::string getFilename() {
 
     return filename;
 }
+
+// REFACTOR 2.7: which totient bounds the congruence tests is a runtime option,
+// shared by the Z and Zn[x] programs, so that whole-program comparisons are
+// like-for-like (previously Z used phi(r) and Zn[x] lambda(r), hard-coded).
+//   default / --phi : 1 <= a <= phi(r) - 1      (Algorithm 2.4.2)
+//   --lambda        : 1 <= a <= lambda(r) - 1   (Egan, 2005)
+bool useLambda = false;
 
 const std::string filename = getFilename();
 std::ofstream perflog(filename, std::ios::app); // output result into file
@@ -166,10 +174,9 @@ inline bool Lenstra (const ZZ& n) {
     r = r1;
     std::printf("r = %ld\n",to_long(r));
 
-    ZZ r2 = Euler(to_long(r));
-    std::printf("Phi(%ld) = %ld\n",to_long(r),to_long(r2));
-    // ZZ r2 = Carmichael(to_long(r));
-    // std::printf("Lambda(%ld) = %ld\n",to_long(r),to_long(r2));
+    ZZ r2 = useLambda ? Carmichael(to_long(r)) : Euler(to_long(r));
+    const std::string r2name = useLambda ? "lambda" : "phi";
+    std::printf("%s(%ld) = %ld\n", r2name.c_str(), to_long(r), to_long(r2));
 
     long a = to_long(r2 - 1);
     long f = CongruenceZ(n,r,r2,a);
@@ -182,8 +189,7 @@ inline bool Lenstra (const ZZ& n) {
         std::printf("%ld is prime.\n",to_long(n));
         std::printf("Time taken: %lld milliseconds\n", time);
 
-        std::string note = "a = " + std::to_string(a) + "; End: a = " + std::to_string(f) + "; r = " + std::to_string(to_long(r)) + "; phi(r) = " + std::to_string(to_long(r2));
-        // std::string note = "a = " + std::to_string(a) + "; End: a = " + std::to_string(f) + "; r = " + std::to_string(to_long(r)) + "; lambda(r) = " + std::to_string(to_long(r2));
+        std::string note = "a = " + std::to_string(a) + "; End: a = " + std::to_string(f) + "; r = " + std::to_string(to_long(r)) + "; " + r2name + "(r) = " + std::to_string(to_long(r2));
         fileWrite(n,ncores,true, time, note);
 
         return true;
@@ -197,8 +203,7 @@ inline bool Lenstra (const ZZ& n) {
         std::printf("The a which fails is %ld\n",f);
         std::printf("Time taken: %lld milliseconds\n", time);
 
-        std::string note = "a = " + std::to_string(a) + "; End: a = " + std::to_string(f) + "; r = " + std::to_string(to_long(r)) + "; phi(r) = " + std::to_string(to_long(r2));
-        // std::string note = "a = " + std::to_string(a) + "; End: a = " + std::to_string(f) + "; r = " + std::to_string(to_long(r)) + "; lambda(r) = " + std::to_string(to_long(r2));
+        std::string note = "a = " + std::to_string(a) + "; End: a = " + std::to_string(f) + "; r = " + std::to_string(to_long(r)) + "; " + r2name + "(r) = " + std::to_string(to_long(r2));
         fileWrite(n, ncores, false, time, note);
 
         return false;
@@ -207,41 +212,29 @@ inline bool Lenstra (const ZZ& n) {
 }
 
 int main (int argc, char * argv[]) {
+    // usage: <program> [--phi | --lambda] [n]
+    //   n is read from standard input when it is not given as an argument.
+    ZZ n;
+    bool haveN = false;
+    for (int i = 1; i < argc; ++i) {
+        if (std::strcmp(argv[i], "--lambda") == 0) {
+            useLambda = true;
+        }
+        else if (std::strcmp(argv[i], "--phi") == 0) {
+            useLambda = false;
+        }
+        else {
+            n = conv<ZZ>(argv[i]);
+            haveN = true;
+        }
+    }
 
     perflog << "Int, Cores, Prime (T/F), Time (milliseconds), Comments\n";
 
-    bool prime;
+    if (!haveN) {
+        std::printf("Enter a positive integer number n you want to be tested:\n");
+        std::cin >> n;
+    }
 
-    // ZZ p = conv<ZZ>("11663");
-    // ZZ p = conv<ZZ>("11639");
-    // ZZ p = conv<ZZ>("160427");
-    // ZZ p = conv<ZZ>("7740919");
-    // ZZ p = conv<ZZ>("23456611");
-    ZZ p = conv<ZZ>("1003026954441971");
-
-    prime = Lenstra(p);
-
-    // // int nos[] = {137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307, 311, 313, 317, 331, 337, 347};
-    // // int nos[] = {11491, 11497, 11503, 11519, 11527, 11549, 11551, 11579, 11587, 11593, 11597, 11617, 11621, 11633, 11657, 11677, 11681, 11689, 11699, 11701};
-    // // ZZ nos[] = {689960931088884849033689023336009222694927, 689960931088884849033689023336009222694971, 689960931088884849033689023336009222695053, 689960931088884849033689023336009222695077};
-    // long nos[] = {23456597, 23456603, 23456627, 23456669, 23456681, 23456683, 23456717, 23456723, 23456743, 23456747, 23456749, 23456761, 23456789};
-    // // long nos[] = {1003026954441829, 1003026954441857, 1003026954441859, 1003026954441947, 1003026954441961, 1003026954441971};
-    // // unsigned long long nos[] = {9007199254740677, 9007199254740727, 9007199254740761, 9007199254740847, 9007199254740881, 9007199254740997};
-    // // unsigned long long nos[] = {10012141, 10012157, 10012181, 10012193, 10012213, 10012217, 10012229, 10012253, 10012271, 10012313, 10012333};
-    // int nosSize = sizeof(nos)/sizeof(*nos);
-    // int nosEnd = (sizeof(nos)/sizeof(*nos)) - 1;
-
-    // for (int i = 0; i < nosSize; ++i) {
-    // // for (unsigned long long i = nos[0]; i < nos[nosEnd] + 1; ++i) {
-    // // // for (int i = 5; i < 506; ++i) {
-    //     // ZZ n;
-    //     // n = 0;
-
-    //     // std::printf("Enter a positive integer number n you want to be tested:\n");
-    //     // std::cin >> n;
-
-    //     prime = Lenstra(to_ZZ(nos[i]));
-    //     // prime = Lenstra(ZZ(i));
-    // }
-
+    return Lenstra(n) ? 0 : 1;
 }

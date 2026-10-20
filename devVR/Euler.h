@@ -1,6 +1,6 @@
 // Euler's phi function
 
-ZZ Euler(long r){
+NTL::ZZ Euler(long r){
     long eu = 1;
 
     for (long p = 2; p * p <= r; p += 2) {
@@ -19,7 +19,7 @@ ZZ Euler(long r){
         }
     }
 
-    ZZ eu1 = to_ZZ(eu);
+    NTL::ZZ eu1 = NTL::to_ZZ(eu);
 
     // now r is prime or 1
     if (r == 1) {

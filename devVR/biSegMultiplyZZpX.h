@@ -59,6 +59,10 @@ ZZ_pX ZZpXmultiply(const ZZ_pX& f, const ZZ_pX& g) {
         of terms in s(x), including those with coefficients equal to zero.
     */
 
+    if (IsZero(f) || IsZero(g)) {                           // deg = -1 would give a product with no terms
+        return ZZ_pX();
+    }
+
     // ZZ termsF = to_ZZ(deg(f)+1);
     // ZZ termsG = to_ZZ(deg(g)+1);
     long termsF = deg(f)+1;
@@ -72,37 +76,40 @@ ZZ_pX ZZpXmultiply(const ZZ_pX& f, const ZZ_pX& g) {
     ZZ rhs = maxTermFG * rep(maxCoeffF) * rep(maxCoeffG);   // rhs = max(U,V) * max(f_j) * max(g_k)
     // ZZ rhs = maxTermFG * sqr(maxCoeff);                     // rhs = max(U,V) * max(f_j) * max(g_k)
 
+    // Every coefficient c_i of s(x) satisfies |c_i| <= rhs. For the signed
+    // digit recovery below to be exact we need |c_i| < X/2, so (per JHD's
+    // feedback on Algorithm 5.1.2) choose b with 2^(b-1) > rhs, leaving room
+    // for the sign bit, and substitute X = 2^b, not 2^b - 1.
     long b = 1;
-    ZZ lhs = (power2_ZZ(b - 1));                            // lhs = 2^(b - 1)
-    while (lhs <= rhs) {                                    // Choose b such that 2^(b - 1) > max(U,V) * max(f_j) * max(g_k)
+    while (power2_ZZ(b - 1) <= rhs) {                       // Choose b such that 2^(b - 1) > max(U,V) * max(f_j) * max(g_k)
         b = b + 1;
-        lhs = (power2_ZZ(b - 1));
     }
 
-    ZZ X = lhs;
-    ZZ F = evaluate(f,X);                                   // evaluate f(x) for x = 2^(b - 1)
-    ZZ G = evaluate(g,X);                                   // evaluate g(x) for x = 2^(b - 1)
+    ZZ X = power2_ZZ(b);                                    // X = 2^b
+    ZZ halfX = power2_ZZ(b - 1);                            // X/2 = 2^(b - 1)
+    ZZ F = evaluate(f,X);                                   // evaluate f(x) for x = 2^b
+    ZZ G = evaluate(g,X);                                   // evaluate g(x) for x = 2^b
 
     ZZ m = F * G;                                           // Integer multiply
 
-    // long fgDeg = deg(f) + deg(g);                           // Degree of polynomial product
-    // long fgTrm = deg(f) + deg(g) + 1;                       // Terms in polynomial product
     long fgTrm = termsF + termsG - 1;                       // Terms in polynomial product
-    ZZ_p s[fgTrm];                                          // Store coefficients and constant in an array
+    std::vector<ZZ_p> s(fgTrm);                             // Store coefficients and constant (std::vector: VLAs are not standard C++)
 
-    s[0] = to_ZZ_p(m % lhs);                                // Reassemble coefficients into signal
-    if (rep(s[0]) > lhs/2) {                                // Extract next b bits: s_i = floor( m/(2^(b - 1))^i ) mod 2^(b - 1)
-        s[0] = s[0] - to_ZZ_p(lhs);
-        m = m + lhs;
-    }
-    for (long i = 1; i < fgTrm; ++i) {
-        m = m / lhs;                                        // N.B. -- NTL "/" operator floors result by default
-        s[i] = to_ZZ_p(m % lhs);
-
-        if (rep(s[i]) > lhs/2) {
-            s[i] = s[i] - to_ZZ_p(lhs);
-            m = m + lhs;
+    // Extract the base-X digits of m: s_i = floor( m/X^i ) mod X, read as a
+    // signed digit in (-X/2, X/2]. The comparison must be made on the integer
+    // digit itself, before it is reduced mod p.
+    ZZ digit;
+    for (long i = 0; i < fgTrm; ++i) {
+        if (i > 0) {
+            m = m / X;                                      // N.B. -- NTL "/" operator floors result by default
         }
+        digit = m % X;                                      // 0 <= digit < X
+
+        if (digit > halfX) {                                // negative coefficient: borrow from the next digit
+            digit -= X;
+            m += X;
+        }
+        s[i] = to_ZZ_p(digit);                              // reduce mod p only after the sign has been recovered
     }
 
     ZZ_pX polyModProd;                                      // Base-b digits of m are desired coefficients

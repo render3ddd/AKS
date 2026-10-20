@@ -26,24 +26,25 @@ ZZ powMod(ZZ a, ZZ n, const ZZ& b) {
 
 ZZ getMaxCoeff(const ZZX& f) {
     /*
-        Returns the largest integer coefficient, f_i, of the input
-        polynomial, f(x), in O(D) time where D is the number of terms
-        in f(x), including those with coefficients equal to zero.
+        Returns the largest absolute value of the integer coefficients,
+        |f_i|, of the input polynomial, f(x), in O(D) time where D is the
+        number of terms in f(x), including those with coefficients equal
+        to zero. The binary segmentation size bound must use magnitudes:
+        with signed coefficients, max{f_i} alone can be 1 (or negative)
+        while |f_i| is large, e.g. f(x) = x - 5.
     */
 
-    ZZ f_i = ConstTerm(f);
+    ZZ f_i = abs(ConstTerm(f));
 
     for (long i = 1; i <= deg(f); ++i) {
-        if (f_i < coeff(f,i)) {
-            f_i = coeff(f,i);
-        }
-        else {
-            continue;
+        if (f_i < abs(coeff(f,i))) {
+            f_i = abs(coeff(f,i));
         }
     }
 
     return f_i;
 }
+
 
 // ZZ evaluate(const ZZX& f, const ZZ& x) {
 //     /*
@@ -90,48 +91,53 @@ ZZX polyMultiply(const ZZX& f, const ZZX& g) {
         terms in s(x), including those with coefficients equal to zero.
     */
 
-    ZZ termsF = to_ZZ(deg(f)+1);
-    ZZ termsG = to_ZZ(deg(g)+1);
-
-    ZZ maxTermFG = to_ZZ(std::max(termsF,termsG));
-    ZZ maxCoeffF = getMaxCoeff(f);
-    ZZ maxCoeffG = getMaxCoeff(g);
-
-    ZZ rhs = maxTermFG * maxCoeffF * maxCoeffG;         // rhs = max(U,V) * max(f_j) * max(g_k)
-
-    long b = 1;
-    ZZ lhs = (power2_ZZ(b - 1));                        // lhs = 2^(b - 1)
-    while (lhs <= rhs) {                                // Choose b such that 2^(b - 1) > max(U,V) * max(f_j) * max(g_k)
-        b = b + 1;
-        lhs = (power2_ZZ(b - 1));
+    if (IsZero(f) || IsZero(g)) {                       // deg = -1 would give a product with no terms
+        return ZZX();
     }
 
-    ZZ X = lhs;
-    ZZ F = evaluate(f,X);                               // evaluate f(x) for x = 2^b - 1
-    ZZ G = evaluate(g,X);                               // evaluate g(x) for x = 2^b - 1
+    long termsF = deg(f)+1;
+    long termsG = deg(g)+1;
+
+    ZZ maxTermFG = to_ZZ(std::max(termsF,termsG));
+    ZZ maxCoeffF = getMaxCoeff(f);                      // max |f_j|
+    ZZ maxCoeffG = getMaxCoeff(g);                      // max |g_k|
+
+    ZZ rhs = maxTermFG * maxCoeffF * maxCoeffG;         // rhs = max(U,V) * max|f_j| * max|g_k| >= |s_i|
+
+    // For the signed digit recovery below to be exact we need |s_i| < X/2,
+    // so (per JHD's feedback on Algorithm 5.1.2) choose b with
+    // 2^(b-1) > rhs, leaving room for the sign bit, and substitute
+    // X = 2^b, not 2^b - 1.
+    long b = 1;
+    while (power2_ZZ(b - 1) <= rhs) {                   // Choose b such that 2^(b - 1) > max(U,V) * max|f_j| * max|g_k|
+        b = b + 1;
+    }
+
+    ZZ X = power2_ZZ(b);                                // X = 2^b
+    ZZ halfX = power2_ZZ(b - 1);                        // X/2 = 2^(b - 1)
+    ZZ F = evaluate(f,X);                               // evaluate f(x) for x = 2^b
+    ZZ G = evaluate(g,X);                               // evaluate g(x) for x = 2^b
 
     ZZ m = F * G;                                       // Integer multiply
 
-    // long fgDeg = deg(f) + deg(g);                       // Degree of polynomial product
-    long fgTrm = deg(f) + deg(g) + 1;                   // Terms in polynomial product
-    ZZ s[fgTrm];                                        // Store coefficients and constant in an array
+    long fgTrm = termsF + termsG - 1;                   // Terms in polynomial product
+    std::vector<ZZ> s(fgTrm);                           // Store coefficients and constant (std::vector: VLAs are not standard C++)
 
-    s[0] = m % lhs;                                     // Reassemble coefficients into signal
-    if (s[0] > lhs/2) {                                 // Extract next b bits: s_i = floor( m/(2b−1)^i ) mod 2^(b - 1)
-        s[0] = s[0] - lhs;
-        m = m + lhs;
-    }
-    for (long i = 1; i < fgTrm; ++i) {
-        m = m / lhs;                                    // N.B. -- NTL "/" operator floors result by default
-        s[i] = m % lhs;
+    // Extract the base-X digits of m: s_i = floor( m/X^i ) mod X, read as a
+    // signed digit in (-X/2, X/2].
+    for (long i = 0; i < fgTrm; ++i) {
+        if (i > 0) {
+            m = m / X;                                  // N.B. -- NTL "/" operator floors result by default
+        }
+        s[i] = m % X;                                   // 0 <= s_i < X
 
-        if (s[i] > lhs/2) {
-            s[i] = s[i] - lhs;
-            m = m + lhs;
+        if (s[i] > halfX) {                             // negative coefficient: borrow from the next digit
+            s[i] -= X;
+            m += X;
         }
     }
 
-    ZZX polyProduct;                                    // Base-b digits of m are desired coefficients
+    ZZX polyProduct;                                    // Base-X digits of m are desired coefficients
     polyProduct.SetLength(fgTrm);                       // set the length of the underlying coefficient vector to number of Terms in polynomial product
 
     for (long j = 0; j < fgTrm; ++j) {
@@ -150,59 +156,7 @@ ZZX polyMulMod(const ZZX& f, const ZZX& g, const ZZX& h) {
         of terms in s(x), including those with coefficients equal to zero.
     */
 
-    ZZ termsF = to_ZZ(deg(f)+1);
-    ZZ termsG = to_ZZ(deg(g)+1);
-
-    ZZ maxTermFG = to_ZZ(std::max(termsF,termsG));
-    ZZ maxCoeffF = getMaxCoeff(f);
-    ZZ maxCoeffG = getMaxCoeff(g);
-
-    ZZ rhs = maxTermFG * maxCoeffF * maxCoeffG;         // rhs = max(U,V) * max(f_j) * max(g_k)
-
-    long b = 1;
-    ZZ lhs = (power2_ZZ(b)) - 1;                        // lhs = 2^(b - 1)
-    while (lhs <= rhs) {                                 // Choose b such that 2^(b - 1) > max(U,V) * max(x_i) * max(y_k)
-        b = b + 1;
-        lhs = (power2_ZZ(b)) - 1;
-    }
-
-    ZZ X = lhs;
-    ZZ F = evaluate(f,X);                               // evaluate f(x) for x = 2^(b - 1)
-    ZZ G = evaluate(g,X);                               // evaluate g(x) for x = 2^(b - 1)
-
-    ZZ m = F * G;                                       // Integer multiply
-
-    // long fgDeg = deg(f) + deg(g);                       // Degree of polynomial product
-    long fgTrm = deg(f) + deg(g) + 1;                   // Terms in polynomial product
-    ZZ s[fgTrm];                                        // Store coefficients and constant in an array
-
-    s[0] = m % lhs;                                     // Reassemble coefficients into signal
-    if (s[0] > lhs/2) {                                 // Extract next b bits: s_i = floor( m/(2b−1)^i ) mod 2^(b - 1)
-        s[0] = s[0] - lhs;
-        m = m + lhs;
-    }
-    for (long i = 1; i < fgTrm; ++i) {
-        m = m / lhs;                                    // N.B. -- NTL "/" operator floors result by default
-        s[i] = m % lhs;
-
-        if (s[i] > lhs/2) {
-            s[i] = s[i] - lhs;
-            m = m + lhs;
-        }
-    }
-
-    ZZX polyProduct;                                    // Base-b digits of m are desired coefficients
-    polyProduct.SetLength(fgTrm);                       // set the length of the underlying coefficient vector to number of Terms in polynomial product
-
-    for (long j = 0; j < fgTrm; ++j) {
-        SetCoeff(polyProduct,j,s[j]);
-    }
-
-    polyProduct.normalize();                            // remove leading zeros on coefficients
-
-    ZZX polyProdMod = polyProduct % h;
-
-    return polyProdMod;
+    return polyMultiply(f,g) % h;
 }
 
 ZZX polyMulModN(const ZZX& f, const ZZX& g, const ZZ& n) {
@@ -212,71 +166,31 @@ ZZX polyMulModN(const ZZX& f, const ZZX& g, const ZZ& n) {
         in s(x), including those with coefficients equal to zero.
     */
 
-    ZZ termsF = to_ZZ(deg(f)+1);
-    ZZ termsG = to_ZZ(deg(g)+1);
+    ZZX polyProdModN = polyMultiply(f,g);
 
-    ZZ maxTermFG = to_ZZ(std::max(termsF,termsG));
-    ZZ maxCoeffF = getMaxCoeff(f);
-    ZZ maxCoeffG = getMaxCoeff(g);
-
-    ZZ rhs = maxTermFG * maxCoeffF * maxCoeffG;     // rhs = max(U,V) * max(f_j) * max(g_k)
-    long b = 1;
-    ZZ lhs = (power2_ZZ(b)) - 1;                    // lhs = 2^(b - 1)
-    while (lhs <= rhs) {                            // Choose b such that 2^(b - 1) > max(U,V) * max(x_i) * max(y_k)
-        b = b + 1;
-        lhs = (power2_ZZ(b)) - 1;
+    for (long j = 0; j <= deg(polyProdModN); ++j) {
+        SetCoeff(polyProdModN,j,(coeff(polyProdModN,j) % n));     // s[j] (mod n)
     }
 
-    ZZ X = lhs;
-    ZZ F = evaluate(f,X);                           // evaluate f(x) for x = 2^(b - 1)
-    ZZ G = evaluate(g,X);                           // evaluate g(x) for x = 2^(b - 1)
-
-    ZZ m = F * G;                                   // Integer multiply
-
-    // long fgDeg = deg(f) + deg(g);                   // Degree of polynomial product
-    long fgTrm = deg(f) + deg(g) + 1;               // Terms in polynomial product
-    ZZ s[fgTrm];                                    // Store coefficients and constant in an array
-
-    s[0] = m % lhs;                                 // Reassemble coefficients into signal
-    if (s[0] > lhs/2) {                             // Extract next b bits: s_i = floor( m/(2b−1)^i ) mod 2^(b - 1)
-        s[0] = s[0] - lhs;
-        m = m + lhs;
-    }
-    for (long i = 1; i < fgTrm; ++i) {
-        m = m / lhs;                                // N.B. -- NTL "/" operator floors result by default
-        s[i] = m % lhs;
-
-        if (s[i] > lhs/2) {
-            s[i] = s[i] - lhs;
-            m = m + lhs;
-        }
-    }
-
-    ZZX polyProdModN;                               // Base-b digits of m are desired coefficients
-    polyProdModN.SetLength(fgTrm);                  // set the length of the underlying coefficient vector to number of Terms in polynomial product
-
-    for (long j = 0; j < fgTrm; ++j) {
-        SetCoeff(polyProdModN,j,(s[j] % n));        // s[j] (mod n)
-    }
-
-    polyProdModN.normalize();                       // remove leading zeros on coefficients
+    polyProdModN.normalize();                           // remove leading zeros on coefficients
 
     return polyProdModN;
 }
 
-ZZX polyPowMod(ZZX a, ZZ n, ZZX b) {
+ZZX polyPowMod(ZZX a, ZZ n, const ZZX& b) {
     /*
         Calculates a(x)^n (mod b(x)) in O((log n)*O(D)) time.
     */
 
     ZZX ans;                    // Initialise answer
     SetCoeff(ans,0,1);
+    a %= b;
 
     while (n > 0) {
         if (n % 2 == 1) {       // if (n is odd) then
             ans = polyMultiply(ans,a) % b;
         }
-        a = polyMultiply(a,a);  // a = a^2 (mod b)
+        a = polyMultiply(a,a) % b;  // a = a^2 (mod b) -- line 6 of Algorithm 5.1.3 was missing "mod b"
         n /= 2;                 // n = n/2
     }
 

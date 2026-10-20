@@ -18,6 +18,7 @@
 
 #include "PerfectPower.h" //Each Independent Test
 #include "Euler.h"
+#include "FindR.h"
 // #include "Carmichael.h"
 #include "CongruenceZ.h"
 
@@ -119,10 +120,13 @@ inline bool Lenstra (const ZZ& n) {
         return false;
     }
 
-    // Find a suitable r
+    // Find a suitable r: the smallest r with ord_r(n) > floor(log2 n)^2.
+    // (Previously: natural log, truncated before squaring, an inverted order
+    // test, and n^v computed in a 64-bit long, which overflowed.)
+    const long log2n = NumBits(n) - 1;          // floor(log2 n)
+    const long maxOrder = log2n * log2n;        // need ord_r(n) > floor(log2 n)^2
     ZZ r = to_ZZ(2);
-    ZZ R;
-    ZZ r1;
+    ZZ r1;                                       // 0 until a suitable r is found
 
     while(r < n){
         ZZ R = GCD(r, n);
@@ -136,31 +140,31 @@ inline bool Lenstra (const ZZ& n) {
             std::printf("Time taken: %lld milliseconds\n", time);
 
             std::string note = std::to_string(to_long(R)) + " is a divisor";
-            fileWrite(n, ncores,false, time, note);
+            fileWrite(n, ncores, false, time, note);
 
             return false;
         }
-        else {
-            ZZ v = to_ZZ(floor(power_long(to_long(log(n)), 2)));
-
-            // order of n mod r is bigger than v;
-            int p = 0;
-            ZZ_p::init(r); // calculate mod r
-
-            while(v <= r){
-                ZZ x = to_ZZ(power_long(to_long(n), to_long(v))); // calculates x = n^v
-                ZZ_p z = to_ZZ_p(x);
-                if(z == to_ZZ_p(1)){
-                    r1 = r; // store value of r
-                    r = n + 1;
-                    break;
-                }
-                else{
-                    v = v + 1;
-                }
-            }
+        else if (OrderExceeds(rem(n, to_long(r)), to_long(r), maxOrder)) {
+            r1 = r;                              // store value of r
+            break;
         }
         r = r + 1;
+    }
+
+    if (IsZero(r1)) {
+        // No suitable r below n, and gcd(a, n) = 1 for every 2 <= a < n,
+        // so n is prime (AKS step: "if n <= r, output PRIME"). Without this
+        // guard r would be 0 below.
+        auto finish = std::chrono::high_resolution_clock::now();
+        auto duration = finish - start;
+        auto time = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+
+        std::printf("%ld is prime.\n",to_long(n));
+        std::printf("Time taken: %lld milliseconds\n", time);
+
+        fileWrite(n, ncores, true, time, "no r < n with ord_r(n) > log2(n)^2; all a < n coprime to n");
+
+        return true;
     }
 
     r = r1;

@@ -14,6 +14,8 @@ NTL_CLIENT
 // factor lists by position, isPrime(0/1) is false, and subLambda always
 // initialises its result.
 
+#include "Totients.h"
+
 bool isPrime(long n) {
     if (n < 2) {
         return false;
@@ -111,22 +113,10 @@ long subLambda(const long& a, const long& b) {
     return lambda;
 }
 
+// REFACTOR 2.5: lambda(n) now comes from one sqrt(n) trial-division
+// factorisation in Totients.h. The helpers above (isPrime, primeFactors, LCM,
+// Phi, subLambda) are kept for existing callers but are no longer used here;
+// isPrime and primeFactors trial-divide up to sqrt(n) (see REFACTOR 1.8).
 ZZ Carmichael(const long& n) {
-
-    if (n <= 1) {
-        return ZZ(1);
-    }
-
-    std::vector<long> p;
-    std::vector<long> e;
-
-    primeFactors(n,p,e);
-
-    std::vector<long> comp;
-
-    for (long i = 0; i < static_cast<long>(p.size()); ++i) {
-        comp.push_back(subLambda(p[i],e[i]));
-    }
-
-    return ZZ(LCM(comp));
+    return ZZ(PhiAndLambda(n).lambda);
 }

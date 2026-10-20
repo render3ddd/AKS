@@ -1,6 +1,10 @@
+#pragma once
+
+#include "NTL/ZZ.h"
+
 // Euler's phi function
 
-NTL::ZZ Euler(long r){
+inline NTL::ZZ Euler(long r){
     long eu = 1;
 
     for (long p = 2; p * p <= r; p += 2) {

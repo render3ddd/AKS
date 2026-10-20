@@ -1,3 +1,6 @@
+#pragma once
+
+#include "NTL/ZZX.h"
 
 #include <math.h>
 #include <vector>
@@ -8,7 +11,7 @@
 #include "NTL/ZZ_pX.h"
 NTL_CLIENT
 
-ZZ powMod(ZZ a, ZZ n, const ZZ& b) {
+inline ZZ powMod(ZZ a, ZZ n, const ZZ& b) {
     // calculates a^n (mod b) in O(log n)
 
     ZZ ans = ZZ(1);         // Initialise answer
@@ -24,7 +27,7 @@ ZZ powMod(ZZ a, ZZ n, const ZZ& b) {
     return ans;
 }
 
-ZZ getMaxCoeff(const ZZX& f) {
+inline ZZ getMaxCoeff(const ZZX& f) {
     /*
         Returns the largest absolute value of the integer coefficients,
         |f_i|, of the input polynomial, f(x), in O(D) time where D is the
@@ -64,7 +67,7 @@ ZZ getMaxCoeff(const ZZX& f) {
 //     return ans;
 // }
 
-ZZ evaluate(const ZZX& f, const ZZ& x) {
+inline ZZ evaluate(const ZZX& f, const ZZ& x) {
     /*
         Returns the integer result when the polynomial f(y) (mod p)
         is evaluated for y = x in O(D) time where D is the number of
@@ -84,7 +87,7 @@ ZZ evaluate(const ZZX& f, const ZZ& x) {
     return ans;
 }
 
-ZZX polyMultiply(const ZZX& f, const ZZX& g) {
+inline ZZX polyMultiply(const ZZX& f, const ZZX& g) {
     /*
         Returns the polynomial product s(x) = f(x) * g(x), using
         binary segmentation, in O(D) time where D is the number of
@@ -149,7 +152,7 @@ ZZX polyMultiply(const ZZX& f, const ZZX& g) {
     return polyProduct;
 }
 
-ZZX polyMulMod(const ZZX& f, const ZZX& g, const ZZX& h) {
+inline ZZX polyMulMod(const ZZX& f, const ZZX& g, const ZZX& h) {
     /*
         Returns the polynomial product s(x) = f(x) * g(x) (mod h(x)),
         using binary segmentation, in O(D) time where D is the number
@@ -159,7 +162,7 @@ ZZX polyMulMod(const ZZX& f, const ZZX& g, const ZZX& h) {
     return polyMultiply(f,g) % h;
 }
 
-ZZX polyMulModN(const ZZX& f, const ZZX& g, const ZZ& n) {
+inline ZZX polyMulModN(const ZZX& f, const ZZX& g, const ZZ& n) {
     /*
         Returns the polynomial product s(x) = f(x) * g(x) (mod n), using
         binary segmentation, in O(D) time where D is the number of terms
@@ -177,7 +180,7 @@ ZZX polyMulModN(const ZZX& f, const ZZX& g, const ZZ& n) {
     return polyProdModN;
 }
 
-ZZX polyPowMod(ZZX a, ZZ n, const ZZX& b) {
+inline ZZX polyPowMod(ZZX a, ZZ n, const ZZX& b) {
     /*
         Calculates a(x)^n (mod b(x)) in O((log n)*O(D)) time.
     */

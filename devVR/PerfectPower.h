@@ -1,3 +1,5 @@
+#pragma once
+
 #include <NTL/RR.h> // NTL Libraries
 #include "NTL/ZZ.h"
 #include "NTL/ZZ_p.h"
@@ -6,7 +8,7 @@
 // function to calculate if n = a^b
 // takes input ZZ n and returns 1 if n is a perfect power, 0 otherwise
 
-int PerfectPower(const NTL::ZZ& n){
+inline int PerfectPower(const NTL::ZZ& n){
     long b = 2;
     NTL::RR k = NTL::to_RR(log(n) / log(2));
     NTL::ZZ a;

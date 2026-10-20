@@ -1,12 +1,18 @@
+#pragma once
+
+#include <cstdio>
+#include "NTL/ZZ.h"
+#include "Cores.h"
 
 #include "NTL/ZZ_p.h"
 #include "NTL/ZZ_pX.h"
 #include <NTL/BasicThreadPool.h>
 NTL_CLIENT
 
-unsigned int ncores = std::thread::hardware_concurrency(); // machine cores - may return 0 when not able to detect
 
-long CongruenceZnx(const ZZ& n, const ZZ& r, const ZZ& r2, const long& a){
+// CongruenceZnx.h (serial) and CongruenceZnxHPC.h (thread pool) are drop-in
+// alternatives: they define the same function, so include only one of them.
+inline long CongruenceZnx(const ZZ& n, const ZZ& r, const ZZ& r2, const long& a){
     // congruence test of polynomials in regular form
 
     ZZ_p::init(n);                      // initialise mod n

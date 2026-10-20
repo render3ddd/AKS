@@ -1,3 +1,4 @@
+#pragma once
 
 #include <vector>
 #include <algorithm>
@@ -6,7 +7,7 @@
 #include "NTL/ZZ_p.h"
 NTL_CLIENT
 
-bool isPrime(long n) {
+inline bool isPrime(long n) {
 
     long i = 2;
     while (i <= n/2) {
@@ -22,7 +23,7 @@ bool isPrime(long n) {
     return true;
 }
 
-void primeFactors(long n, vector<long>& p, vector<long>& e) {
+inline void primeFactors(long n, vector<long>& p, vector<long>& e) {
 
     // std::cout << "\nChecking if " << n << " is prime...\n";
 
@@ -57,7 +58,7 @@ void primeFactors(long n, vector<long>& p, vector<long>& e) {
 
 }
 
-unsigned long long LCM(vector<long>& n) {
+inline unsigned long long LCM(vector<long>& n) {
 
     unsigned long long lcm = 1;
     std::vector<long> p;
@@ -110,7 +111,7 @@ unsigned long long LCM(vector<long>& n) {
     return lcm;
 }
 
-unsigned long long Phi(unsigned long long r){
+inline unsigned long long Phi(unsigned long long r){
     unsigned long long eu = 1;
 
     for (unsigned long long p = 2; p * p <= r; p += 2) {
@@ -140,7 +141,7 @@ unsigned long long Phi(unsigned long long r){
     }
 }
 
-long subLambda(const long& a, const long& b) {
+inline long subLambda(const long& a, const long& b) {
 
     unsigned long long lambda;
 
@@ -229,7 +230,7 @@ long subLambda(const long& a, const long& b) {
 //     return ZZ(lambda_r);
 // }
 
-ZZ Carmichael(const long& n) {
+inline ZZ Carmichael(const long& n) {
 
     if (isPrime(n)) {
         return ZZ(Phi(n));

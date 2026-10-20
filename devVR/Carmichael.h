@@ -69,8 +69,8 @@ unsigned long long LCM(vector<long>& n) {
     b.resize(n.size());
     t.resize(n.size());
 
-    for (long i = 0; i < n.size(); ++i) {
-        primeFactors(n[i],p,e);
+    for (long i : n) {
+        primeFactors(i,p,e);
 
         // std::cout << "Prime factors:\t";
         // for (int i = 0; i < p.size(); i++)

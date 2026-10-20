@@ -146,3 +146,47 @@ ZZ_pX ZZpPowMod(ZZ_pX a, ZZ n, const ZZ_pX& b) {
 
     return ans;
 }
+
+
+inline void FoldCyclic(ZZ_pX& a, long r) {
+    /*
+        Reduces a(x) modulo x^r - 1 in place in O(deg a) additions: since
+        x^r = 1, coefficient i is added onto coefficient i - r (REFACTOR 2.3).
+        Working downwards means coefficients that land at index >= r again are
+        folded later in the same pass.
+    */
+
+    long d = deg(a);
+    if (d < r) {
+        return;
+    }
+    for (long i = d; i >= r; --i) {
+        a.rep[i - r] += a.rep[i];
+    }
+    a.rep.SetLength(r);
+    a.normalize();
+}
+
+inline ZZ_pX ZZpPowModCyclic(ZZ_pX a, ZZ n, long r) {
+    /*
+        Calculates a(x)^n (mod x^r - 1, p), reducing by FoldCyclic instead of
+        general polynomial division (ZZpPowMod's "%= b").
+    */
+
+    ZZ_pX ans;                          // Initialise answer
+    SetCoeff(ans,0,1);
+    FoldCyclic(a, r);
+
+    while (n > 0) {
+        if (n % 2 == 1) {               // if (n is odd) then
+            ans = ZZpXmultiply(ans,a);
+            FoldCyclic(ans, r);
+        }
+        a = ZZpXmultiply(a,a);          // a = a^2 (mod x^r - 1)
+        FoldCyclic(a, r);
+
+        n /= 2;                         // n = n/2
+    }
+
+    return ans;
+}

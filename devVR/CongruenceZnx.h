@@ -20,15 +20,19 @@ long CongruenceZnx(const ZZ& n, const ZZ& r, const ZZ& r2, const long& a){
     printf("Done.\n");
 
     printf("Calculating x^n (mod (x^r - 1), n) ...\n");
-    ZZ_pX d = PowerMod(e, n, b);        // d = x^n (mod b, n)
+    ZZ_pX d = ZZ_pX(rem(n, to_long(r)), 1);  // d = x^n (mod x^r - 1, n) = x^(n mod r): no powermod needed
     printf("Done.\n");
+
+    // NTL's PowerMod takes a ZZ_pXModulus; passing the ZZ_pX b built a
+    // temporary one (with its precomputation) on every call. Build it once.
+    const ZZ_pXModulus B(b);
 
     printf("\nCommencing congruence tests:\n\n");
     for(long j = 1; j <= a; ++j){
         printf("a = %ld\n",j);
 
         ZZ_pX c = ZZ_pX(1, 1) - j ;         // c = x - a (mod n);
-        ZZ_pX f = PowerMod(c, n, b);        // f = (x - a)^n (mod b, n) - LHS
+        ZZ_pX f = PowerMod(c, n, B);        // f = (x - a)^n (mod b, n) - LHS
         ZZ_pX g = d - j;                    // g = x^n - a (mod b, n) - RHS
 
         if(f != g){

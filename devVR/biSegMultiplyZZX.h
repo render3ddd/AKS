@@ -117,7 +117,7 @@ ZZX polyMultiply(const ZZX& f, const ZZX& g) {
     ZZ s[fgTrm];                                        // Store coefficients and constant in an array
 
     s[0] = m % lhs;                                     // Reassemble coefficients into signal
-    if (s[0] > lhs/2) {                                 // Extract next b bits: s_i = floor( m/(2b−1)^i ) mod 2^b − 1
+    if (s[0] > lhs/2) {                                 // Extract next b bits: s_i = floor( m/(2b−1)^i ) mod 2^(b - 1)
         s[0] = s[0] - lhs;
         m = m + lhs;
     }
@@ -160,15 +160,15 @@ ZZX polyMulMod(const ZZX& f, const ZZX& g, const ZZX& h) {
     ZZ rhs = maxTermFG * maxCoeffF * maxCoeffG;         // rhs = max(U,V) * max(f_j) * max(g_k)
 
     long b = 1;
-    ZZ lhs = (power2_ZZ(b)) - 1;                        // lhs = 2^b-1
-    while (lhs <= rhs) {                                 // Choose b such that 2^b − 1 > max(U,V) * max(x_i) * max(y_k)
+    ZZ lhs = (power2_ZZ(b)) - 1;                        // lhs = 2^(b - 1)
+    while (lhs <= rhs) {                                 // Choose b such that 2^(b - 1) > max(U,V) * max(x_i) * max(y_k)
         b = b + 1;
         lhs = (power2_ZZ(b)) - 1;
     }
 
     ZZ X = lhs;
-    ZZ F = evaluate(f,X);                               // evaluate f(x) for x = 2^b - 1
-    ZZ G = evaluate(g,X);                               // evaluate g(x) for x = 2^b - 1
+    ZZ F = evaluate(f,X);                               // evaluate f(x) for x = 2^(b - 1)
+    ZZ G = evaluate(g,X);                               // evaluate g(x) for x = 2^(b - 1)
 
     ZZ m = F * G;                                       // Integer multiply
 
@@ -177,7 +177,7 @@ ZZX polyMulMod(const ZZX& f, const ZZX& g, const ZZX& h) {
     ZZ s[fgTrm];                                        // Store coefficients and constant in an array
 
     s[0] = m % lhs;                                     // Reassemble coefficients into signal
-    if (s[0] > lhs/2) {                                 // Extract next b bits: s_i = floor( m/(2b−1)^i ) mod 2^b − 1
+    if (s[0] > lhs/2) {                                 // Extract next b bits: s_i = floor( m/(2b−1)^i ) mod 2^(b - 1)
         s[0] = s[0] - lhs;
         m = m + lhs;
     }
@@ -221,15 +221,15 @@ ZZX polyMulModN(const ZZX& f, const ZZX& g, const ZZ& n) {
 
     ZZ rhs = maxTermFG * maxCoeffF * maxCoeffG;     // rhs = max(U,V) * max(f_j) * max(g_k)
     long b = 1;
-    ZZ lhs = (power2_ZZ(b)) - 1;                    // lhs = 2^b-1
-    while (lhs <= rhs) {                            // Choose b such that 2^b − 1 > max(U,V) * max(x_i) * max(y_k)
+    ZZ lhs = (power2_ZZ(b)) - 1;                    // lhs = 2^(b - 1)
+    while (lhs <= rhs) {                            // Choose b such that 2^(b - 1) > max(U,V) * max(x_i) * max(y_k)
         b = b + 1;
         lhs = (power2_ZZ(b)) - 1;
     }
 
     ZZ X = lhs;
-    ZZ F = evaluate(f,X);                           // evaluate f(x) for x = 2^b - 1
-    ZZ G = evaluate(g,X);                           // evaluate g(x) for x = 2^b - 1
+    ZZ F = evaluate(f,X);                           // evaluate f(x) for x = 2^(b - 1)
+    ZZ G = evaluate(g,X);                           // evaluate g(x) for x = 2^(b - 1)
 
     ZZ m = F * G;                                   // Integer multiply
 
@@ -238,7 +238,7 @@ ZZX polyMulModN(const ZZX& f, const ZZX& g, const ZZ& n) {
     ZZ s[fgTrm];                                    // Store coefficients and constant in an array
 
     s[0] = m % lhs;                                 // Reassemble coefficients into signal
-    if (s[0] > lhs/2) {                             // Extract next b bits: s_i = floor( m/(2b−1)^i ) mod 2^b − 1
+    if (s[0] > lhs/2) {                             // Extract next b bits: s_i = floor( m/(2b−1)^i ) mod 2^(b - 1)
         s[0] = s[0] - lhs;
         m = m + lhs;
     }

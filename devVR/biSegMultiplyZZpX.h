@@ -1,5 +1,5 @@
 
-#include <math.h>
+#include <cmath>
 #include <vector>
 #include <algorithm>
 
@@ -43,7 +43,7 @@ ZZ evaluate(const ZZ_pX& f, const ZZ& x) {
     long fDeg = deg(f);
     ZZ ans = rep(ConstTerm(f));
 
-    ZZ xpow = ZZ(1);
+    auto xpow = ZZ(1);
     for (long i = 1; i <= fDeg; ++i) {
         xpow = xpow*x;
         ans += rep(coeff(f,i))*xpow;
@@ -80,8 +80,8 @@ ZZ_pX ZZpXmultiply(const ZZ_pX& f, const ZZ_pX& g) {
     }
 
     ZZ X = lhs;
-    ZZ F = evaluate(f,X);                                   // evaluate f(x) for x = 2^b - 1
-    ZZ G = evaluate(g,X);                                   // evaluate g(x) for x = 2^b - 1
+    ZZ F = evaluate(f,X);                                   // evaluate f(x) for x = 2^(b - 1)
+    ZZ G = evaluate(g,X);                                   // evaluate g(x) for x = 2^(b - 1)
 
     ZZ m = F * G;                                           // Integer multiply
 
@@ -91,7 +91,7 @@ ZZ_pX ZZpXmultiply(const ZZ_pX& f, const ZZ_pX& g) {
     ZZ_p s[fgTrm];                                          // Store coefficients and constant in an array
 
     s[0] = to_ZZ_p(m % lhs);                                // Reassemble coefficients into signal
-    if (rep(s[0]) > lhs/2) {                                // Extract next b bits: s_i = floor( m/(2b−1)^i ) mod 2^b − 1
+    if (rep(s[0]) > lhs/2) {                                // Extract next b bits: s_i = floor( m/(2^(b - 1))^i ) mod 2^(b - 1)
         s[0] = s[0] - to_ZZ_p(lhs);
         m = m + lhs;
     }

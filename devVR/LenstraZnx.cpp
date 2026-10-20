@@ -5,44 +5,27 @@
         $ g++ -g -O2 -std=c++11 -pthread -march=native devVR/LenstraZnx.cpp -o devVR/LenstraZnx.out -lntl -lgmp -lm
 */
 
-#include <math.h> // standard libraries
+#include <cmath> // standard libraries
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <iomanip>
-// #include <windows.h>
-#include <unistd.h>
-#include <stdio.h>
 #include <cstdio>
-#include <stdlib.h>
-#include <cstdlib>
-#include <filesystem>
-// #include <mmsystem.h>
-#include <time.h>
 #include <ctime>
-#include <chrono>
 #include <string>
 #include <thread>
 #include <array>
-#include <sys/time.h>
-#include <sys/resource.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-
-#include "NTL/ZZ.h" // NTL Libraries
-#include "NTL/ZZ_p.h"
-#include "NTL/ZZ_pX.h"
-#include "NTL/ZZX.h"
-#include "NTL/vec_ZZ.h"
-#include <NTL/ZZ_pXFactoring.h>
-#include <NTL/BasicThreadPool.h>
-NTL_CLIENT
 
 #include "PerfectPower.h" //Each Independent Test
 #include "Euler.h"
 #include "Carmichael.h"
 // #include "CongruenceZnx.h"
 #include "CongruenceZnxHPC.h"
+
+#include "NTL/ZZ.h" // NTL Libraries
+#include "NTL/ZZ_p.h"
+#include "NTL/ZZX.h"
+NTL_CLIENT
 
 std::string getDate() {
     auto t = std::time(nullptr);
@@ -78,10 +61,7 @@ std::string getDateTime() {
 }
 
 std::string getFilename() {
-    // std::string make = "/logs/" + getDate();
-    // int result = mkdir(make.c_str(), 0777);
     std::string fldr = "logs/Znx/";
-    // std::string fldr = "logs/" + getDate() + "/";
     std::string prfx = "LnstrZnx-";
     std::string sffx = getDateTime();
     std::string extn = ".csv";
@@ -91,8 +71,7 @@ std::string getFilename() {
     return filename;
 }
 
-// std::filesystem::create_directory("logs/" + getDate());
-std::string filename = getFilename();
+const std::string filename = getFilename();
 std::ofstream perflog(filename, std::ios::app); // output result into file
 
 inline void fileWrite(const ZZ& n, const unsigned int& cores, const bool& PRIME, const long& time, const std::string& other) {
@@ -108,12 +87,8 @@ inline bool Lenstra (const ZZ& n) {
         std::printf("1 is neither prime or composite.\n");
         return false;
     }
-    else if(n == 2){
-        std::printf("2 is prime.\n");
-        return true;
-    }
-    else if(n == 3){
-        std::printf("3 is prime.\n");
+    else if(n == 2 || n == 3){
+        std::printf("%d is prime.\n", to_int(n));
         return true;
     }
 
@@ -133,10 +108,10 @@ inline bool Lenstra (const ZZ& n) {
 
         std::printf("%ld is not prime.\n",to_long(n));
         std::printf("%ld is a perfect power.\n",to_long(n));
-        std::printf("Time taken: %ld milliseconds\n",time);
+        std::printf("Time taken: %lld milliseconds\n", time);
 
         std::string note = std::to_string(to_long(n)) + " is a perfect power";
-        fileWrite(n,ncores,false,time,note);
+        fileWrite(n, ncores, false, time, note);
 
         return false;
     }
@@ -155,13 +130,12 @@ inline bool Lenstra (const ZZ& n) {
 
             std::printf("%ld is not prime.\n",to_long(n));
             std::printf("%ld is a divisor.\n",to_long(R));
-            std::printf("Time taken: %ld milliseconds\n",time);
+            std::printf("Time taken: %lld milliseconds\n", time);
 
             std::string note = std::to_string(to_long(R)) + " is a divisor";
-            fileWrite(n,ncores,false,time,note);
+            fileWrite(n,ncores,false, time, note);
 
             return false;
-            break;
         }
         else {
             ZZ v = to_ZZ(floor(power_long(to_long(log(n)), 2)));
@@ -203,11 +177,11 @@ inline bool Lenstra (const ZZ& n) {
         auto time = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
 
         std::printf("%ld is prime.\n",to_long(n));
-        std::printf("Time taken: %ld milliseconds\n",time);
+        std::printf("Time taken: %lld milliseconds\n", time);
 
         // std::string note = "a = " + std::to_string(a) + "; End: a = " + std::to_string(f) + "; r = " + std::to_string(to_long(r)) + "; phi(r) = " + std::to_string(to_long(r2));
         std::string note = "a = " + std::to_string(a) + "; End: a = " + std::to_string(f) + "; r = " + std::to_string(to_long(r)) + "; lambda(r) = " + std::to_string(to_long(r2));
-        fileWrite(n,ncores,true,time,note);
+        fileWrite(n,ncores,true, time, note);
 
         return true;
     }
@@ -218,14 +192,13 @@ inline bool Lenstra (const ZZ& n) {
 
         std::printf("%ld is not prime.\n",to_long(n));
         std::printf("The a which fails is %ld\n",f);
-        std::printf("Time taken: %ld milliseconds\n",time);
+        std::printf("Time taken: %lld milliseconds\n", time);
 
         std::string note = "a = " + std::to_string(a) + "; End: a = " + std::to_string(f) + "; r = " + std::to_string(to_long(r)) + "; phi(r) = " + std::to_string(to_long(r2));
         // std::string note = "a = " + std::to_string(a) + "; End: a = " + std::to_string(f) + "; r = " + std::to_string(to_long(r)) + "; lambda(r) = " + std::to_string(to_long(r2));
-        fileWrite(n,ncores,false,time,note);
+        fileWrite(n, ncores, false, time, note);
 
         return false;
-        // break;
     }
 
 }
@@ -346,19 +319,20 @@ int main (int argc, char * argv[]) {
     int nosSize = sizeof(nos)/sizeof(*nos);
     int nosEnd = (sizeof(nos)/sizeof(*nos)) - 1;
 
-    for (int i = 0; i < nosSize; ++i) {
+//    for (int i = 0; i < nosSize; ++i) {
     // for (unsigned long long i = nos[0]; i < nos[nosEnd] + 1; ++i) {
     // for (ZZ i = ZZ(nos[0]); i < ZZ(nos[nosEnd] + 1); ++i) {
     // // for (int i = 5; i < 506; ++i) {
-        // ZZ n;
+        ZZ n;
         // n = 0;
 
-        // std::printf("Enter a positive integer number n you want to be tested:\n");
-        // std::cin >> n;
+        std::printf("Enter a positive integer number n you want to be tested:\n");
+        std::cin >> n;
+        Lenstra(n);
 
         // prime = Lenstra(ZZ(nos[i]));
-        prime = Lenstra(nos[i]);
+//        Lenstra(nos[i]);
         // prime = Lenstra(ZZ(i));
-    }
+//    }
 
 }

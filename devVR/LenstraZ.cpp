@@ -15,6 +15,7 @@
 #include <string>
 #include <thread>
 #include <array>
+#include <sys/stat.h>
 
 #include "PerfectPower.h" //Each Independent Test
 #include "Euler.h"
@@ -70,11 +71,31 @@ std::string getFilename() {
     return filename;
 }
 
-const std::string filename = getFilename();
-std::ofstream perflog(filename, std::ios::app); // output result into file
+// REFACTOR 2.8: the log used to be a global std::ofstream opened during
+// static initialisation, so every run created a timestamped CSV (with just a
+// header) even when it stopped early, and failed silently if logs/Z/ was
+// missing. It is now opened on the first result: the folder is created if
+// needed, a failure is reported, and the header is written only to a new file.
+std::ofstream& perfLog() {
+    static std::ofstream log;
+    if (!log.is_open()) {
+        mkdir("logs", 0777);                    // no-op if it already exists
+        mkdir("logs/Z", 0777);
+        const std::string filename = getFilename();
+        const bool isNew = !std::ifstream(filename).good();
+        log.open(filename, std::ios::app);
+        if (!log) {
+            std::fprintf(stderr, "warning: cannot open log file %s\n", filename.c_str());
+        }
+        else if (isNew) {
+            log << "Int, Cores, Prime (T/F), Time (milliseconds), Comments\n";
+        }
+    }
+    return log;
+}
 
 inline void fileWrite(const ZZ& n, const unsigned int& cores, const bool& PRIME, const long& time, const std::string& other) {
-    perflog << n << "," << cores << "," << PRIME  << "," << time << "," << other << "\n";
+    perfLog() << n << "," << cores << "," << PRIME  << "," << time << "," << other << "\n";
 }
 
 inline bool Lenstra (const ZZ& n) {
@@ -207,8 +228,6 @@ inline bool Lenstra (const ZZ& n) {
 }
 
 int main (int argc, char * argv[]) {
-
-    perflog << "Int, Cores, Prime (T/F), Time (milliseconds), Comments\n";
 
     bool prime;
 

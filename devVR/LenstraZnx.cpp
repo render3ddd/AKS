@@ -18,6 +18,7 @@
 
 #include "PerfectPower.h" //Each Independent Test
 #include "Euler.h"
+#include "ARange.h"
 #include "Carmichael.h"
 // #include "CongruenceZnx.h"
 #include "CongruenceZnxHPC.h"
@@ -163,12 +164,17 @@ inline bool Lenstra (const ZZ& n) {
     r = r1;
     std::printf("r = %ld\n",to_long(r));
 
-    // ZZ r2 = Euler(to_long(r));
-    // std::printf("Phi(%ld) = %ld\n",to_long(r),to_long(r2));
-    ZZ r2 = Carmichael(to_long(r));
-    std::printf("Lambda(%ld) = %ld\n",to_long(r),to_long(r2));
+    // Upper limit for a (REFACTOR 1.3). The default is the AKS/Lenstra bound;
+    // ARange::LambdaMinusOne reproduces this program's runs in the dissertation
+    // but is not certified by the theorem (see ARange.h).
+    const ARange aRange = ARange::Theorem;
 
-    long a = to_long(r2 - 1);
+    ZZ r2 = Euler(to_long(r));                                  // phi(r)
+    long lambda = to_long(Carmichael(to_long(r)));              // lambda(r)
+    std::printf("Phi(%ld) = %ld, Lambda(%ld) = %ld\n", to_long(r), to_long(r2), to_long(r), lambda);
+
+    long a = ABound(aRange, n, to_long(r2), lambda);
+    std::printf("Testing 1 <= a <= %ld (%s)\n", a, ARangeName(aRange));
     long f = CongruenceZnx(n,r,r2,a);
 
     if(f == 0){
@@ -179,8 +185,7 @@ inline bool Lenstra (const ZZ& n) {
         std::printf("%ld is prime.\n",to_long(n));
         std::printf("Time taken: %lld milliseconds\n", time);
 
-        // std::string note = "a = " + std::to_string(a) + "; End: a = " + std::to_string(f) + "; r = " + std::to_string(to_long(r)) + "; phi(r) = " + std::to_string(to_long(r2));
-        std::string note = "a = " + std::to_string(a) + "; End: a = " + std::to_string(f) + "; r = " + std::to_string(to_long(r)) + "; lambda(r) = " + std::to_string(to_long(r2));
+        std::string note = "a = " + std::to_string(a) + " (" + ARangeName(aRange) + "); End: a = " + std::to_string(f) + "; r = " + std::to_string(to_long(r)) + "; phi(r) = " + std::to_string(to_long(r2)) + "; lambda(r) = " + std::to_string(lambda);
         fileWrite(n,ncores,true, time, note);
 
         return true;
@@ -194,8 +199,7 @@ inline bool Lenstra (const ZZ& n) {
         std::printf("The a which fails is %ld\n",f);
         std::printf("Time taken: %lld milliseconds\n", time);
 
-        std::string note = "a = " + std::to_string(a) + "; End: a = " + std::to_string(f) + "; r = " + std::to_string(to_long(r)) + "; phi(r) = " + std::to_string(to_long(r2));
-        // std::string note = "a = " + std::to_string(a) + "; End: a = " + std::to_string(f) + "; r = " + std::to_string(to_long(r)) + "; lambda(r) = " + std::to_string(to_long(r2));
+        std::string note = "a = " + std::to_string(a) + " (" + ARangeName(aRange) + "); End: a = " + std::to_string(f) + "; r = " + std::to_string(to_long(r)) + "; phi(r) = " + std::to_string(to_long(r2)) + "; lambda(r) = " + std::to_string(lambda);
         fileWrite(n, ncores, false, time, note);
 
         return false;

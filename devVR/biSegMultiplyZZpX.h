@@ -1,3 +1,4 @@
+#pragma once
 
 #include <cmath>
 #include <vector>
@@ -8,7 +9,7 @@
 #include "NTL/ZZ_pX.h"
 NTL_CLIENT
 
-ZZ_p getMaxCoeff(const ZZ_pX& f) {
+inline ZZ_p getMaxCoeff(const ZZ_pX& f) {
     /*
         Returns the largest integer coefficient, f_i, of the input
         polynomial, f(x) (mod p), in O(D) time where D is the number
@@ -32,7 +33,7 @@ ZZ_p getMaxCoeff(const ZZ_pX& f) {
     return f_i;
 }
 
-ZZ evaluate(const ZZ_pX& f, const ZZ& x) {
+inline ZZ evaluate(const ZZ_pX& f, const ZZ& x) {
     /*
         Returns the integer result when the polynomial f(y) (mod p)
         is evaluated for y = x in O(D) time where D is the number of
@@ -52,7 +53,7 @@ ZZ evaluate(const ZZ_pX& f, const ZZ& x) {
     return ans;
 }
 
-ZZ_pX ZZpXmultiply(const ZZ_pX& f, const ZZ_pX& g) {
+inline ZZ_pX ZZpXmultiply(const ZZ_pX& f, const ZZ_pX& g) {
     /*
         Returns the polynomial product s(x) =  f(x) * g(x) (mod p),
         using binary segmentation, in O(D) time where D is the number
@@ -124,7 +125,7 @@ ZZ_pX ZZpXmultiply(const ZZ_pX& f, const ZZ_pX& g) {
     return polyModProd;
 }
 
-ZZ_pX ZZpPowMod(ZZ_pX a, ZZ n, const ZZ_pX& b) {
+inline ZZ_pX ZZpPowMod(ZZ_pX a, ZZ n, const ZZ_pX& b) {
     /*
         Calculates a(x)^n (mod b(x), p) in O(log n) time.
     */

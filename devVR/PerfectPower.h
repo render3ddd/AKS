@@ -1,42 +1,44 @@
-#include <NTL/RR.h> // NTL Libraries
-#include "NTL/ZZ.h"
-#include "NTL/ZZ_p.h"
-#include "NTL/ZZX.h"
+#include <iostream>
+
+#include "NTL/ZZ.h" // NTL Libraries
+
+// floor(n^(1/k)) for n >= 1 and k >= 2, using integer Newton iteration only.
+// Starting from x0 = 2^ceil(bits(n)/k) >= n^(1/k), the iterates decrease
+// monotonically to the floor of the root.
+inline NTL::ZZ IntegerRoot(const NTL::ZZ& n, long k) {
+    NTL::ZZ x = NTL::power2_ZZ((NTL::NumBits(n) + k - 1) / k);
+    for (;;) {
+        NTL::ZZ y = ((k - 1) * x + n / NTL::power(x, k - 1)) / k;
+        if (y >= x) {
+            return x;
+        }
+        x = y;
+    }
+}
 
 // function to calculate if n = a^b
 // takes input ZZ n and returns 1 if n is a perfect power, 0 otherwise
+//
+// Previously Newton's method ran in double precision and assigned the root
+// to a long, so perfect powers with a base >= 2^63 were missed and some
+// inputs never terminated. Every step is now exact. Only prime exponents
+// b <= floor(log2 n) need testing: a^(pq) = (a^p)^q.
 
 int PerfectPower(const NTL::ZZ& n){
-    long b = 2;
-    NTL::RR k = NTL::to_RR(log(n) / log(2));
-    NTL::ZZ a;
+    if (n < 4) {
+        return 0;                       // 1, 2 and 3 are handled by the caller
+    }
 
-    while(b <= to_long(k)){
-        // b cannot be bigger than k
-        long c = NTL::to_long(ceil((log(n) / log(2)) / NTL::to_long(b)));
-        a = pow(2, c); // assign guess value for a
+    const long maxB = NTL::NumBits(n) - 1;  // floor(log2 n): a >= 2 implies b <= log2 n
 
-        while(power(a, b) > n){
-            double d = to_double(((b - 1) * a + n / power(a, (b - 1))) / b); // Apply Integer Newton's Method
-            NTL::ZZ e = NTL::to_ZZ(floor(d));
-            a = to_long(e); // adjust a
-        }
-
-        if(n == power(a, b)){
+    for (long b = 2; b <= maxB; b = NTL::NextPrime(b + 1)) {
+        NTL::ZZ a = IntegerRoot(n, b);
+        if (NTL::power(a, b) == n) {
             // if n is a perfect power
-            printf("n = a^b\n");
-            printf("b = %ld\n",b);
-            printf("a = %ld\n\n",to_long(a));
+            std::cout << "n = a^b\n" << "b = " << b << "\n" << "a = " << a << "\n\n";
             return 1;
         }
-        else{
-            b = b + 1;
-        }
     }
 
-    if(n != power(a,b)){
-        return 0; // n is not a perfect power
-    }
-
-    return 0;
+    return 0; // n is not a perfect power
 }

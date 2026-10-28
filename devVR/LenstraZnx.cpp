@@ -12,6 +12,7 @@
 #include <iomanip>
 #include <cstdio>
 #include <ctime>
+#include <chrono>
 #include <string>
 #include <thread>
 #include <array>
@@ -207,8 +208,6 @@ int main (int argc, char * argv[]) {
 
     perflog << "Int, Cores, Prime (T/F), Time (milliseconds), Comments\n";
 
-    bool prime;
-
     // // ZZ p = conv<ZZ>("11663");
     // // ZZ p = conv<ZZ>("11639");
     // ZZ p = conv<ZZ>("23456611"); // not prime
@@ -314,10 +313,12 @@ int main (int argc, char * argv[]) {
 
 
 
-    ZZ nos[] = {conv<ZZ>("689960931088884849033689023336009222694927"),conv<ZZ>("689960931088884849033689023336009222694971"),conv<ZZ>("689960931088884849033689023336009222695053"),conv<ZZ>("689960931088884849033689023336009222695077")};
-
-    int nosSize = sizeof(nos)/sizeof(*nos);
-    int nosEnd = (sizeof(nos)/sizeof(*nos)) - 1;
+    // The 42-digit test primes formerly looped over here (nos[]) are listed in
+    // Appendix B.2 of the dissertation; pass them on standard input instead:
+    //   689960931088884849033689023336009222694927
+    //   689960931088884849033689023336009222694971
+    //   689960931088884849033689023336009222695053
+    //   689960931088884849033689023336009222695077
 
 //    for (int i = 0; i < nosSize; ++i) {
     // for (unsigned long long i = nos[0]; i < nos[nosEnd] + 1; ++i) {

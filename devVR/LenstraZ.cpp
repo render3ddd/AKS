@@ -26,6 +26,14 @@
 #include "NTL/ZZX.h"
 NTL_CLIENT
 
+// Decimal string of an arbitrary-size integer. (std::to_string(to_long(x))
+// truncated anything above 2^63, e.g. the 42-digit test primes.)
+std::string ZZtoString(const ZZ& x) {
+    std::ostringstream oss;
+    oss << x;
+    return oss.str();
+}
+
 std::string getDate() {
     auto t = std::time(nullptr);
     auto tm = *std::localtime(&t);
@@ -109,11 +117,11 @@ inline bool Lenstra (const ZZ& n) {
         auto duration = finish - start;
         auto time = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
 
-        std::printf("%ld is not prime.\n",to_long(n));
-        std::printf("%ld is a perfect power.\n",to_long(n));
-        std::printf("Time taken: %lld milliseconds\n", time);
+        std::cout << n << " is not prime.\n";
+        std::cout << n << " is a perfect power.\n";
+        std::printf("Time taken: %lld milliseconds\n", static_cast<long long>(time));
 
-        std::string note = std::to_string(to_long(n)) + " is a perfect power";
+        std::string note = ZZtoString(n) + " is a perfect power";
         fileWrite(n, ncores, false, time, note);
 
         return false;
@@ -131,11 +139,11 @@ inline bool Lenstra (const ZZ& n) {
             auto duration = finish - start;
             auto time = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
 
-            std::printf("%ld is not prime.\n",to_long(n));
-            std::printf("%ld is a divisor.\n",to_long(R));
-            std::printf("Time taken: %lld milliseconds\n", time);
+            std::cout << n << " is not prime.\n";
+            std::cout << R << " is a divisor.\n";
+            std::printf("Time taken: %lld milliseconds\n", static_cast<long long>(time));
 
-            std::string note = std::to_string(to_long(R)) + " is a divisor";
+            std::string note = ZZtoString(R) + " is a divisor";
             fileWrite(n, ncores,false, time, note);
 
             return false;
@@ -179,8 +187,8 @@ inline bool Lenstra (const ZZ& n) {
         auto duration = finish - start;
         auto time = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
 
-        std::printf("%ld is prime.\n",to_long(n));
-        std::printf("Time taken: %lld milliseconds\n", time);
+        std::cout << n << " is prime.\n";
+        std::printf("Time taken: %lld milliseconds\n", static_cast<long long>(time));
 
         std::string note = "a = " + std::to_string(a) + "; End: a = " + std::to_string(f) + "; r = " + std::to_string(to_long(r)) + "; phi(r) = " + std::to_string(to_long(r2));
         // std::string note = "a = " + std::to_string(a) + "; End: a = " + std::to_string(f) + "; r = " + std::to_string(to_long(r)) + "; lambda(r) = " + std::to_string(to_long(r2));
@@ -193,9 +201,9 @@ inline bool Lenstra (const ZZ& n) {
         auto duration = finish - start;
         auto time = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
 
-        std::printf("%ld is not prime.\n",to_long(n));
+        std::cout << n << " is not prime.\n";
         std::printf("The a which fails is %ld\n",f);
-        std::printf("Time taken: %lld milliseconds\n", time);
+        std::printf("Time taken: %lld milliseconds\n", static_cast<long long>(time));
 
         std::string note = "a = " + std::to_string(a) + "; End: a = " + std::to_string(f) + "; r = " + std::to_string(to_long(r)) + "; phi(r) = " + std::to_string(to_long(r2));
         // std::string note = "a = " + std::to_string(a) + "; End: a = " + std::to_string(f) + "; r = " + std::to_string(to_long(r)) + "; lambda(r) = " + std::to_string(to_long(r2));

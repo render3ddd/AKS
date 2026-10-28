@@ -1,3 +1,4 @@
+#include <iostream>
 #include <NTL/RR.h> // NTL Libraries
 #include "NTL/ZZ.h"
 #include "NTL/ZZ_p.h"
@@ -24,9 +25,7 @@ int PerfectPower(const NTL::ZZ& n){
 
         if(n == power(a, b)){
             // if n is a perfect power
-            printf("n = a^b\n");
-            printf("b = %ld\n",b);
-            printf("a = %ld\n\n",to_long(a));
+            std::cout << "n = a^b\n" << "b = " << b << "\n" << "a = " << a << "\n\n";
             return 1;
         }
         else{

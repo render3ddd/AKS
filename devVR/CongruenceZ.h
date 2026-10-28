@@ -19,7 +19,7 @@ long CongruenceZ(const ZZ& n, const ZZ& r, const ZZ& r2, const long& a) {
     printf("Done.\n");
 
     printf("Initialising x (mod n) ...\n");
-    ZZ_pX e = ZZ_pX(1, 1);              // e = x (mod n)
+    auto e = ZZ_pX(1, 1);              // e = x (mod n)
     printf("Done.\n");
 
     printf("Calculating x^n (mod (x^r - 1), n) ...\n");
@@ -35,9 +35,9 @@ long CongruenceZ(const ZZ& n, const ZZ& r, const ZZ& r2, const long& a) {
         ZZ_pX g = d - j;                    // g = x^n - a (mod b, n) - RHS
 
         if(f != g){
-            return(j); // n is not prime
+            return j; // n is not prime
         }
     }
 
-    return(0); // n is prime
+    return 0; // n is prime
 }

@@ -56,14 +56,14 @@ long CongruenceZnx(const ZZ& n, const ZZ& r, const ZZ& r2, const long& a){
 
     NTL_EXEC_RANGE_END
 
-    if (test.size() == 0) {
+    if (test.empty()) {
         return 0; // n is prime
     }
     else {
         long smallest = test.at(0);
-        for (int k = 0; k < test.size(); ++k) {
-            if (test.at(k) < smallest) {
-                smallest = test.at(k);
+        for (long k : test) {
+            if (k < smallest) {
+                smallest = k;
             }
         }
 

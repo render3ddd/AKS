@@ -1,15 +1,4 @@
-# CORRECTIONS.md: Changes on `fix/binary-segmentation-sign-bit`
-
-This branch sits on top of `main` (`e173feb`) and contains two commits:
-
-| Commit | Summary |
-|---|---|
-| `2e78c69` | **WIP snapshot.** Uncommitted 2024 local work, committed as-is and not reviewed at the time. See [Other code changes](#other-code-changes). |
-| `3242448` | **Main fix.** Binary segmentation sign-bit bound, and the missing `mod b` in `polyPowMod`. |
-
-The remaining issues found during review are listed in `REFACTOR.md` on `main`. Each one is addressed on its own `refactor/<issue-id>-…` branch cut from this branch.
-
----
+# CORRECTIONS.md
 
 ## Main fix: binary segmentation (supervisor's feedback, pp. 37–38)
 
@@ -18,15 +7,15 @@ The marker's notes on the dissertation identified two defects in the binary segm
 > **p. 37.** "I think we want 2^{b−1} > …, not 2^b − 1 (to allow for the sign bit), and you need to substitute in 2^b, not 2^b − 1."
 > **p. 38.** "Line 6 also needs to be modulo b, which seems to be missing here."
 
-### What was wrong
+### Errors
 
-1. **Bound and evaluation point.** The code chose *b* with 2^b − 1 > max(U,V)·max f_j·max g_k and substituted X = 2^b − 1. Signed-digit recovery treats a digit greater than X/2 as negative, so it is only exact when every product coefficient satisfies |s_i| < X/2. With X only just above the bound, legitimate positive coefficients in (X/2, bound] were turned into negatives. Commit `e173feb` changed X to 2^(b−1), which still leaves no sign margin, and it updated only two of the four copies of the loop.
+1. **Bound and evaluation point.** The code chose *b* with 2^b − 1 > max(U,V)·max f_j·max g_k and substituted X = 2^b − 1. Signed-digit recovery treats a digit greater than X/2 as negative, so it is only exact when every product coefficient satisfies |s_i| < X/2. With X only just above the bound, legitimate positive coefficients in (X/2, bound] were turned into negatives. Initial work changed X to 2^(b−1), which still leaves no sign margin, and it updated only two of the four copies of the loop.
 2. **Comparing after reduction** (`ZZpXmultiply`). Each digit was reduced mod p *before* it was compared with X/2. Any true coefficient in (X/2, p) was then corrupted. Example: (1 + x + … + x⁸)² mod 10007.
 3. **Unsigned bound for signed coefficients** (`getMaxCoeff(ZZX)`). The function returned the largest signed coefficient, so for x − 5 the "maximum" was 1 and the bound was far too small. (x − 5)², (−7x − 3)² and even 3·3 came out wrong.
 4. **Missing `mod b`** (`polyPowMod`, line 6 of Algorithm 5.1.3). a(x)² was never reduced, so a(x) grew without bound. The wrong products eventually produced a zero polynomial.
 5. **Zero operand.** A zero polynomial has deg = −1, which gave a zero-length array, and the code then wrote past its end. This produced the segfault in item 4.
 
-### What changed
+### Changes
 
 | File | Change |
 |---|---|

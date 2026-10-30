@@ -141,21 +141,27 @@ inline bool Lenstra (const ZZ& n) {
             return false;
         }
         else {
-            ZZ v = to_ZZ(floor(power_long(to_long(log(n)), 2)));
+            long v = to_long(to_ZZ(floor(power_long(to_long(log(n)), 2))));
 
             // order of n mod r is bigger than v;
-            int p = 0;
-            ZZ_p::init(r); // calculate mod r
+            //
+            // REFACTOR 2.4: same acceptance condition as before, but evaluated
+            // with word-sized modular arithmetic on n mod r. Previously
+            // n^v was computed in a 64-bit long (power_long), which overflows
+            // for any realistic n and v, and ZZ_p::init(r) ran for every r.
+            // (Whether this condition is the right one is REFACTOR 1.2.)
+            const long rl = to_long(r);
+            const long nr = rem(n, rl);                 // n mod r
+            long x = PowerMod(nr, v, rl);               // n^v mod r
 
-            while(v <= r){
-                ZZ x = to_ZZ(power_long(to_long(n), to_long(v))); // calculates x = n^v
-                ZZ_p z = to_ZZ_p(x);
-                if(z == to_ZZ_p(1)){
-                    r1 = r; // store value of r
+            while (v <= rl) {
+                if (x == 1 % rl) {
+                    r1 = r;                             // store value of r
                     r = n + 1;
                     break;
                 }
-                else{
+                else {
+                    x = MulMod(x, nr, rl);              // n^(v+1) mod r
                     v = v + 1;
                 }
             }

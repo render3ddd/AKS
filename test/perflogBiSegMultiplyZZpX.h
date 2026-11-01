@@ -1,3 +1,8 @@
+// NOTE (REFACTOR 1.10): instrumented copy used to produce the Chapter 5 profiling
+// figures. It still contains the ORIGINAL, unfixed binary segmentation (2^b - 1
+// evaluation point, digit compared after reduction mod p). Use
+// devVR/biSegMultiplyZZpX.h for anything other than reproducing those figures.
+
 
 #include <math.h>
 #include <vector>

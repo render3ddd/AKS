@@ -7,6 +7,14 @@
 #include <NTL/BasicThreadPool.h>
 NTL_CLIENT
 
+// Per-a progress output (REFACTOR 2.6). Printing every a from the hot loop,
+// and from every worker thread, costs I/O time and serialises the threads on
+// stdout. It is off by default; build with -DAKS_VERBOSE=1 to restore it.
+#ifndef AKS_VERBOSE
+#define AKS_VERBOSE 0
+#endif
+
+
 unsigned int ncores = std::thread::hardware_concurrency(); // machine cores - may return 0 when not able to detect
 
 long CongruenceZnx(const ZZ& n, const ZZ& r, const ZZ& r2, const long& a){
@@ -33,7 +41,7 @@ long CongruenceZnx(const ZZ& n, const ZZ& r, const ZZ& r2, const long& a){
     vector <long> test;
     test.reserve(ncores);
 
-    printf("\nCommencing congruence tests:\n\n");
+    printf("\nCommencing congruence tests (1 <= a <= %ld):\n\n", a);
     long first, last;
     NTL_EXEC_RANGE(a,first,last)
 
@@ -41,7 +49,9 @@ long CongruenceZnx(const ZZ& n, const ZZ& r, const ZZ& r2, const long& a){
 
         for(long j = first; j < last; ++j){
             if (j < last) {                            // ensures each thread does not continue past j = a
-                printf("a = %ld\n",(j + 1));
+                if (AKS_VERBOSE) {
+                    printf("a = %ld\n",(j + 1));
+                }
 
                 ZZ_pX c = ZZ_pX(1, 1) - (j + 1);    // c = x - a (mod n);
                 ZZ_pX f = PowerMod(c, n, b);        // f = (x - a)^n (mod b, n) - LHS

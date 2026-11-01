@@ -27,7 +27,7 @@
 #include "NTL/ZZXFactoring.h"
 NTL_CLIENT
 
-#include "../devVR/CongruenceZ.h" // personal header
+#include "../devVR/biSegMultiplyZZX.h" // personal header (ZZX getMaxCoeff/evaluate/polyMultiply)
 
 template <typename T> std::string type_name();
 

@@ -1,13 +1,14 @@
 
+#if defined(__x86_64__) || defined(__i386__)
 #include <cpuid.h>
+#define HAVE_CPUID 1
+#endif
 #include <iostream>
 #include <map>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string>
 #include <thread>
-#include <filesystem>
-#include <experimental/filesystem>
 
 using namespace std;
 
@@ -26,6 +27,7 @@ struct CPUVendorID {
 };
 
 int main() {
+#ifdef HAVE_CPUID
     unsigned int level = 0;
     unsigned int eax = 0;
     unsigned int ebx;
@@ -56,6 +58,9 @@ int main() {
     cout << "Max instruction ID: " << eax << endl;
     cout << "Vendor ID: " << vendorIDString << endl;
     cout << "Vendor name: " << vendorName << endl;
+#else
+    cout << "CPUID not available on this architecture (e.g. Apple Silicon / arm64)" << endl;
+#endif
     cout << "Thread count: " << nthreads << endl;
     cout << "Current Path:"  << getcwd(tmp, 256) << endl;
 }

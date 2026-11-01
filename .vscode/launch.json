@@ -41,12 +41,6 @@
                 "ignoreFailures": true
             }
         ]
-    },
-        {
-            "name": "CUDA C++: Launch",
-            "type": "cuda-gdb",
-            "request": "launch",
-            "program": "${workspaceFolder}/devVR/LenstraZnx.cu"
-        }
+    }
     ]
 }

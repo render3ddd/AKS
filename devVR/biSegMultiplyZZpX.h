@@ -68,23 +68,18 @@ ZZ_pX ZZpXmultiply(const ZZ_pX& f, const ZZ_pX& g) {
     long termsF = deg(f)+1;
     long termsG = deg(g)+1;
 
-    ZZ maxTermFG = to_ZZ(std::max(termsF,termsG));
-    ZZ_p maxCoeffF = getMaxCoeff(f);
-    ZZ_p maxCoeffG = getMaxCoeff(g);
-    // ZZ maxCoeff = ZZ_p::modulus();
-
-    ZZ rhs = maxTermFG * rep(maxCoeffF) * rep(maxCoeffG);   // rhs = max(U,V) * max(f_j) * max(g_k)
-    // ZZ rhs = maxTermFG * sqr(maxCoeff);                     // rhs = max(U,V) * max(f_j) * max(g_k)
+    // REFACTOR 2.2: coefficients of a ZZ_pX lie in [0, p-1], so every
+    // coefficient of s(x) is a sum of at most min(U,V) products, each at most
+    // (p-1)^2. That bound is exact a priori and needs no scan for max(f_j) and
+    // max(g_k) (the old bound also used max(U,V), which over-counts terms).
+    ZZ minTermFG = to_ZZ(std::min(termsF,termsG));
+    ZZ rhs = minTermFG * sqr(ZZ_p::modulus() - 1);          // rhs = min(U,V) * (p-1)^2 >= |s_i|
 
     // Every coefficient c_i of s(x) satisfies |c_i| <= rhs. For the signed
     // digit recovery below to be exact we need |c_i| < X/2, so (per JHD's
     // feedback on Algorithm 5.1.2) choose b with 2^(b-1) > rhs, leaving room
     // for the sign bit, and substitute X = 2^b, not 2^b - 1.
-    long b = 1;
-    while (power2_ZZ(b - 1) <= rhs) {                       // Choose b such that 2^(b - 1) > max(U,V) * max(f_j) * max(g_k)
-        b = b + 1;
-    }
-
+    long b = NumBits(rhs) + 1;                              // smallest b with 2^(b - 1) > rhs
     ZZ X = power2_ZZ(b);                                    // X = 2^b
     ZZ halfX = power2_ZZ(b - 1);                            // X/2 = 2^(b - 1)
     ZZ F = evaluate(f,X);                                   // evaluate f(x) for x = 2^b

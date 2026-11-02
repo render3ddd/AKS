@@ -22,6 +22,7 @@
 #include "PerfectPower.h" //Each Independent Test
 #include "Euler.h"
 #include "FindR.h"
+#include "ARange.h"
 #include "Carmichael.h"
 #include "CongruenceZ.h"
 
@@ -82,12 +83,14 @@ std::string getFilename() {
     return filename;
 }
 
-// REFACTOR 2.7: which totient bounds the congruence tests is a runtime option,
-// shared by the Z and Zn[x] programs, so that whole-program comparisons are
-// like-for-like (previously Z used phi(r) and Zn[x] lambda(r), hard-coded).
-//   default / --phi : 1 <= a <= phi(r) - 1      (Algorithm 2.4.2)
-//   --lambda        : 1 <= a <= lambda(r) - 1   (Egan, 2005)
-bool useLambda = false;
+// REFACTOR 2.7 / 1.3: how far the congruence tests run is a runtime option,
+// shared by the Z and Zn[x] programs so that whole-program comparisons are
+// like-for-like (see ARange.h):
+//   default / --theorem : 1 <= a <= floor(sqrt(phi(r)) log2 n)   (AKS/Lenstra bound)
+//   --phi               : 1 <= a <= phi(r) - 1      (Algorithm 2.4.2; not certified)
+//   --lambda            : 1 <= a <= lambda(r) - 1   (Egan, 2005; not certified)
+// This program's dissertation runs used --phi.
+ARange aRange = ARange::Theorem;
 
 // REFACTOR 2.8: the log used to be a global std::ofstream opened during
 // static initialisation, so every run created a timestamped CSV (with just a
@@ -208,11 +211,12 @@ inline bool Lenstra (const ZZ& n) {
     r = r1;
     std::printf("r = %ld\n",to_long(r));
 
-    ZZ r2 = useLambda ? Carmichael(to_long(r)) : Euler(to_long(r));
-    const std::string r2name = useLambda ? "lambda" : "phi";
-    std::printf("%s(%ld) = %ld\n", r2name.c_str(), to_long(r), to_long(r2));
+    ZZ r2 = Euler(to_long(r));                                  // phi(r)
+    long lambda = to_long(Carmichael(to_long(r)));              // lambda(r)
+    std::printf("Phi(%ld) = %ld, Lambda(%ld) = %ld\n", to_long(r), to_long(r2), to_long(r), lambda);
 
-    long a = to_long(r2 - 1);
+    long a = ABound(aRange, n, to_long(r2), lambda);
+    std::printf("Testing 1 <= a <= %ld (%s)\n", a, ARangeName(aRange));
     long f = CongruenceZ(n,r,r2,a);
 
     if(f == 0){
@@ -223,7 +227,7 @@ inline bool Lenstra (const ZZ& n) {
         std::cout << n << " is prime.\n";
         std::printf("Time taken: %lld milliseconds\n", static_cast<long long>(time));
 
-        std::string note = "a = " + std::to_string(a) + "; End: a = " + std::to_string(f) + "; r = " + std::to_string(to_long(r)) + "; " + r2name + "(r) = " + std::to_string(to_long(r2));
+        std::string note = "a = " + std::to_string(a) + " (" + ARangeName(aRange) + "); End: a = " + std::to_string(f) + "; r = " + std::to_string(to_long(r)) + "; phi(r) = " + std::to_string(to_long(r2)) + "; lambda(r) = " + std::to_string(lambda);
         fileWrite(n,ncores,true, time, note);
 
         return true;
@@ -237,7 +241,7 @@ inline bool Lenstra (const ZZ& n) {
         std::printf("The a which fails is %ld\n",f);
         std::printf("Time taken: %lld milliseconds\n", static_cast<long long>(time));
 
-        std::string note = "a = " + std::to_string(a) + "; End: a = " + std::to_string(f) + "; r = " + std::to_string(to_long(r)) + "; " + r2name + "(r) = " + std::to_string(to_long(r2));
+        std::string note = "a = " + std::to_string(a) + " (" + ARangeName(aRange) + "); End: a = " + std::to_string(f) + "; r = " + std::to_string(to_long(r)) + "; phi(r) = " + std::to_string(to_long(r2)) + "; lambda(r) = " + std::to_string(lambda);
         fileWrite(n, ncores, false, time, note);
 
         return false;
@@ -246,16 +250,19 @@ inline bool Lenstra (const ZZ& n) {
 }
 
 int main (int argc, char * argv[]) {
-    // usage: <program> [--phi | --lambda] [n]
+    // usage: <program> [--theorem | --phi | --lambda] [n]
     //   n is read from standard input when it is not given as an argument.
     ZZ n;
     bool haveN = false;
     for (int i = 1; i < argc; ++i) {
-        if (std::strcmp(argv[i], "--lambda") == 0) {
-            useLambda = true;
+        if (std::strcmp(argv[i], "--theorem") == 0) {
+            aRange = ARange::Theorem;
         }
         else if (std::strcmp(argv[i], "--phi") == 0) {
-            useLambda = false;
+            aRange = ARange::PhiMinusOne;
+        }
+        else if (std::strcmp(argv[i], "--lambda") == 0) {
+            aRange = ARange::LambdaMinusOne;
         }
         else {
             n = conv<ZZ>(argv[i]);

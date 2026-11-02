@@ -98,7 +98,16 @@ inline ZZ_pX ZZpXmultiply(const ZZ_pX& f, const ZZ_pX& g) {
         return z;
     };
 
-    ZZ m = pack(f, termsF) * pack(g, termsG);               // one big-integer multiply
+    // Dedicated squaring (REFACTOR §5): powering spends most of its time on
+    // a(x) * a(x). When both arguments are the same object, pack once and
+    // square the integer: GMP's squaring is faster than a general multiply.
+    ZZ m;
+    if (&f == &g) {
+        sqr(m, pack(f, termsF));                            // one big-integer square
+    }
+    else {
+        m = pack(f, termsF) * pack(g, termsG);              // one big-integer multiply
+    }
 
     long fgTrm = termsF + termsG - 1;                       // Terms in polynomial product
     std::vector<unsigned char> out(fgTrm * slotBytes, 0);
@@ -117,6 +126,15 @@ inline ZZ_pX ZZpXmultiply(const ZZ_pX& f, const ZZ_pX& g) {
     return polyModProd;
 }
 
+inline ZZ_pX ZZpXsqr(const ZZ_pX& f) {
+    /*
+        Returns f(x)^2 (mod p) using binary segmentation with a single pack
+        and a big-integer square (see ZZpXmultiply).
+    */
+
+    return ZZpXmultiply(f, f);
+}
+
 inline ZZ_pX ZZpPowMod(ZZ_pX a, ZZ n, const ZZ_pX& b) {
     /*
         Calculates a(x)^n (mod b(x), p) in O(log n) time.
@@ -130,7 +148,7 @@ inline ZZ_pX ZZpPowMod(ZZ_pX a, ZZ n, const ZZ_pX& b) {
             ans = ZZpXmultiply(ans,a);
             ans %= b;
         }
-        a = ZZpXmultiply(a,a);          // a = a^2 (mod b)
+        a = ZZpXsqr(a);                 // a = a^2 (mod b)
         // a = sqr(a);                     // a = a^2 (mod b)
         a %= b;
 
@@ -175,7 +193,7 @@ inline ZZ_pX ZZpPowModCyclic(ZZ_pX a, ZZ n, long r) {
             ans = ZZpXmultiply(ans,a);
             FoldCyclic(ans, r);
         }
-        a = ZZpXmultiply(a,a);          // a = a^2 (mod x^r - 1)
+        a = ZZpXsqr(a);                 // a = a^2 (mod x^r - 1)
         FoldCyclic(a, r);
 
         n /= 2;                         // n = n/2

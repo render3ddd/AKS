@@ -21,6 +21,7 @@
 
 #include "PerfectPower.h" //Each Independent Test
 #include "Euler.h"
+#include "Cores.h"
 #include "FindR.h"
 #include "ARange.h"
 #include "Carmichael.h"

@@ -1,3 +1,5 @@
+#pragma once
+
 #include <vector>
 #include <algorithm>
 #include <cstdio>
@@ -16,7 +18,7 @@ NTL_CLIENT
 
 #include "Totients.h"
 
-bool isPrime(long n) {
+inline bool isPrime(long n) {
     if (n < 2) {
         return false;
     }
@@ -29,7 +31,7 @@ bool isPrime(long n) {
 }
 
 // Prime factorisation n = prod p[i]^e[i] (p ascending), by trial division up to sqrt(n).
-void primeFactors(long n, vector<long>& p, vector<long>& e) {
+inline void primeFactors(long n, vector<long>& p, vector<long>& e) {
     for (long d = 2; d * d <= n; ++d) {
         if (n % d == 0) {
             long k = 0;
@@ -47,7 +49,7 @@ void primeFactors(long n, vector<long>& p, vector<long>& e) {
     }
 }
 
-static unsigned long long gcdULL(unsigned long long a, unsigned long long b) {
+inline unsigned long long gcdULL(unsigned long long a, unsigned long long b) {
     while (b != 0) {
         unsigned long long t = a % b;
         a = b;
@@ -56,7 +58,7 @@ static unsigned long long gcdULL(unsigned long long a, unsigned long long b) {
     return a;
 }
 
-unsigned long long LCM(vector<long>& n) {
+inline unsigned long long LCM(vector<long>& n) {
     unsigned long long lcm = 1;
     for (long v : n) {
         unsigned long long u = static_cast<unsigned long long>(v);
@@ -65,7 +67,7 @@ unsigned long long LCM(vector<long>& n) {
     return lcm;
 }
 
-unsigned long long Phi(unsigned long long r){
+inline unsigned long long Phi(unsigned long long r){
     unsigned long long eu = 1;
 
     for (unsigned long long p = 2; p * p <= r; p += 2) {
@@ -96,7 +98,7 @@ unsigned long long Phi(unsigned long long r){
 }
 
 // lambda(a^b) for a prime a and b >= 0.
-long subLambda(const long& a, const long& b) {
+inline long subLambda(const long& a, const long& b) {
 
     unsigned long long lambda = 1;          // lambda(a^0) = lambda(1) = 1
 
@@ -117,6 +119,6 @@ long subLambda(const long& a, const long& b) {
 // factorisation in Totients.h. The helpers above (isPrime, primeFactors, LCM,
 // Phi, subLambda) are kept for existing callers but are no longer used here;
 // isPrime and primeFactors trial-divide up to sqrt(n) (see REFACTOR 1.8).
-ZZ Carmichael(const long& n) {
+inline ZZ Carmichael(const long& n) {
     return ZZ(PhiAndLambda(n).lambda);
 }

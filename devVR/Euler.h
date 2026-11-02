@@ -1,3 +1,7 @@
+#pragma once
+
+#include "NTL/ZZ.h"
+
 // Euler's phi function
 //
 // REFACTOR 2.5: computed with Carmichael's lambda from one factorisation in
@@ -5,6 +9,6 @@
 
 #include "Totients.h"
 
-NTL::ZZ Euler(long r){
+inline NTL::ZZ Euler(long r){
     return NTL::to_ZZ(PhiAndLambda(r).phi);
 }

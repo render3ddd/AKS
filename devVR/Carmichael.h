@@ -98,7 +98,7 @@ inline unsigned long long Phi(unsigned long long r){
 }
 
 // lambda(a^b) for a prime a and b >= 0.
-inline long subLambda(const long& a, const long& b) {
+inline long subLambda(long a, long b) {
 
     unsigned long long lambda = 1;          // lambda(a^0) = lambda(1) = 1
 
@@ -119,6 +119,6 @@ inline long subLambda(const long& a, const long& b) {
 // factorisation in Totients.h. The helpers above (isPrime, primeFactors, LCM,
 // Phi, subLambda) are kept for existing callers but are no longer used here;
 // isPrime and primeFactors trial-divide up to sqrt(n) (see REFACTOR 1.8).
-inline ZZ Carmichael(const long& n) {
+inline ZZ Carmichael(long n) {
     return ZZ(PhiAndLambda(n).lambda);
 }

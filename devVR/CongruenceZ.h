@@ -20,7 +20,7 @@ NTL_CLIENT
 
 // const auto SetNumThreads(ncores); // number of threads - should correspond to the number of available cores on your machine
 
-inline long CongruenceZ(const ZZ& n, const ZZ& r, const ZZ& r2, const long& a) {
+inline long CongruenceZ(const ZZ& n, const ZZ& r, const ZZ& r2, long a) {
     // congruence test of polynomials in large integer form
 
     ZZ_p::init(n);                      // initialise mod n

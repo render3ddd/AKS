@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 
 #include "NTL/ZZ.h" // NTL Libraries
@@ -24,7 +26,7 @@ inline NTL::ZZ IntegerRoot(const NTL::ZZ& n, long k) {
 // inputs never terminated. Every step is now exact. Only prime exponents
 // b <= floor(log2 n) need testing: a^(pq) = (a^p)^q.
 
-int PerfectPower(const NTL::ZZ& n){
+inline int PerfectPower(const NTL::ZZ& n){
     if (n < 4) {
         return 0;                       // 1, 2 and 3 are handled by the caller
     }

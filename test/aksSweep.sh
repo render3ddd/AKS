@@ -15,7 +15,7 @@ cd "$work"
 fail=0
 for ((n = 2; n <= max; ++n)); do
     expect=$(echo "$n" | "$oracle")
-    out=$(echo "$n" | "$prog" 2>&1)
+    out=$(echo "$n" | "$prog" 2>&1) || true    # exit status is 1 for composites (REFACTOR 2.7)
     if grep -q "^$n is prime\." <<< "$out"; then got=1
     elif grep -q "^$n is not prime\." <<< "$out"; then got=0
     else got=?; fi

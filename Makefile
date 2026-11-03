@@ -5,7 +5,10 @@
 #
 # macOS + Homebrew: NTL/GMP are found under $(brew --prefix) automatically.
 
-CXX      ?= c++
+# make predefines CXX (= g++), so "?=" would never apply; only override the default.
+ifeq ($(origin CXX),default)
+  CXX := c++
+endif
 CXXFLAGS ?= -g -O2 -std=c++17 -pthread
 LDLIBS   = -lntl -lgmp -lm
 

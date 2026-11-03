@@ -2,16 +2,46 @@
     // Use IntelliSense to learn about possible attributes.
     // Hover to view descriptions of existing attributes.
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    //
+    // macOS (Apple Silicon): use the "(lldb)" entries, which need the CodeLLDB
+    // extension (vadimcn.vscode-lldb); GDB does not run on Apple Silicon.
+    // Linux: use the "(gdb)" entries. Build first with `make` (and
+    // `make test/unitTest.out` for the unit tests). cwd is the repository root
+    // so that the programs' relative logs/ paths resolve.
     "version": "0.2.0",
     "configurations": [
     {
-        "name": "Unit Tests",
-        "type": "cppdbg",
+        "name": "LenstraZnx (lldb)",
+        "type": "lldb",
+        "request": "launch",
+        "program": "${workspaceFolder}/devVR/LenstraZnx.out",
+        "args": ["23456789"],
+        "cwd": "${workspaceFolder}"
+    },
+    {
+        "name": "LenstraZ (lldb)",
+        "type": "lldb",
+        "request": "launch",
+        "program": "${workspaceFolder}/devVR/LenstraZ.out",
+        "args": ["23456789"],
+        "cwd": "${workspaceFolder}"
+    },
+    {
+        "name": "Unit Tests (lldb)",
+        "type": "lldb",
         "request": "launch",
         "program": "${workspaceFolder}/test/unitTest.out",
         "args": [],
+        "cwd": "${workspaceFolder}"
+    },
+    {
+        "name": "LenstraZnx (gdb)",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/devVR/LenstraZnx.out",
+        "args": ["23456789"],
         "stopAtEntry": false,
-        "cwd": "${fileDirname}",
+        "cwd": "${workspaceFolder}",
         "environment": [],
         "externalConsole": false,
         "MIMode": "gdb",
@@ -24,13 +54,13 @@
         ]
     },
     {
-        "name": "LenstraZnx.cpp",
+        "name": "Unit Tests (gdb)",
         "type": "cppdbg",
         "request": "launch",
-        "program": "${workspaceFolder}/devVR/LenstraZnx.out",
+        "program": "${workspaceFolder}/test/unitTest.out",
         "args": [],
         "stopAtEntry": false,
-        "cwd": "${fileDirname}",
+        "cwd": "${workspaceFolder}",
         "environment": [],
         "externalConsole": false,
         "MIMode": "gdb",

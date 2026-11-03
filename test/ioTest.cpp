@@ -1,6 +1,7 @@
 // speed test for printf and std::cout
 // $ g++ test/main.cpp -o test/main.out
 
+#include <cstdint>
 #include <iostream>
 // #include <windows.h>
 
@@ -52,7 +53,7 @@ int main()
 {
     string testName[] = {"printf", "std::cout"};
 
-    long to[100], tt[100], tth[100];
+    long to[101], tt[101], tth[101];          // [0..99]: runs; [100]: average
     to[100] = 0;
     tt[100] = 0;
     tth[100] = 0;

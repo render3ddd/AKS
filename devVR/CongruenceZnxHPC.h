@@ -25,7 +25,7 @@ NTL_CLIENT
 
 // CongruenceZnx.h (serial) and CongruenceZnxHPC.h (thread pool) are drop-in
 // alternatives: they define the same function, so include only one of them.
-inline long CongruenceZnx(const ZZ& n, const ZZ& r, const ZZ& r2, const long& a){
+inline long CongruenceZnx(const ZZ& n, const ZZ& r, const ZZ& r2, long a){
     // congruence test of polynomials in regular form
     SetNumThreads(ncores); // number of threads - should correspond to the number of available cores on your machine
     std::cout << AvailableThreads() << " of " << ncores << " threads available.\n";

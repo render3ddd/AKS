@@ -116,11 +116,11 @@ std::ofstream& perfLog() {
     return log;
 }
 
-inline void fileWrite(const ZZ& n, const unsigned int& cores, const bool& PRIME, const long& time, const std::string& other) {
+inline void fileWrite(const ZZ& n, unsigned int cores, bool PRIME, long long time, const std::string& other) {
     perfLog() << n << "," << cores << "," << PRIME  << "," << time << "," << other << "\n";
 }
 
-inline bool Lenstra (const ZZ& n) {
+bool Lenstra (const ZZ& n) {
     if(n < 1){
         std::printf("Integer n needs to be positive.\n");
         return false;
@@ -141,14 +141,14 @@ inline bool Lenstra (const ZZ& n) {
     std::cout << "n = " << n << "\n\n";
 
     // start timing
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = std::chrono::steady_clock::now();
 
     // Test if n is a perfect power
     int PP = PerfectPower(n);
 
     // returns 1 if n is a perfect power, 0 otherwise;
     if(PP == 1){
-        auto finish = std::chrono::high_resolution_clock::now();
+        auto finish = std::chrono::steady_clock::now();
         auto duration = finish - start;
         auto time = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
 
@@ -173,7 +173,7 @@ inline bool Lenstra (const ZZ& n) {
     while(r < n){
         ZZ R = GCD(r, n);
         if(R != 1 ){
-            auto finish = std::chrono::high_resolution_clock::now();
+            auto finish = std::chrono::steady_clock::now();
             auto duration = finish - start;
             auto time = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
 
@@ -197,12 +197,12 @@ inline bool Lenstra (const ZZ& n) {
         // No suitable r below n, and gcd(a, n) = 1 for every 2 <= a < n,
         // so n is prime (AKS step: "if n <= r, output PRIME"). Without this
         // guard r would be 0 below.
-        auto finish = std::chrono::high_resolution_clock::now();
+        auto finish = std::chrono::steady_clock::now();
         auto duration = finish - start;
         auto time = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
 
         std::printf("%ld is prime.\n",to_long(n));
-        std::printf("Time taken: %lld milliseconds\n", time);
+        std::printf("Time taken: %lld milliseconds\n", static_cast<long long>(time));
 
         fileWrite(n, ncores, true, time, "no r < n with ord_r(n) > log2(n)^2; all a < n coprime to n");
 
@@ -221,7 +221,7 @@ inline bool Lenstra (const ZZ& n) {
     long f = CongruenceZ(n,r,r2,a);
 
     if(f == 0){
-        auto finish = std::chrono::high_resolution_clock::now();
+        auto finish = std::chrono::steady_clock::now();
         auto duration = finish - start;
         auto time = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
 
@@ -234,7 +234,7 @@ inline bool Lenstra (const ZZ& n) {
         return true;
     }
     else {
-        auto finish = std::chrono::high_resolution_clock::now();
+        auto finish = std::chrono::steady_clock::now();
         auto duration = finish - start;
         auto time = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
 

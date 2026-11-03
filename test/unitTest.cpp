@@ -805,7 +805,7 @@ int main(int argc, char * argv[]) {
             auto stopNTL = std::chrono::high_resolution_clock::now();
             auto durationNTL = stopNTL - startNTL;
             auto tNTL = std::chrono::duration_cast<std::chrono::milliseconds>(durationNTL).count();
-            std::printf("NTL Time:\t%ld milliseconds\n",tNTL);
+            std::printf("NTL Time:\t%lld milliseconds\n",static_cast<long long>(tNTL));
 
             auto startBsg = std::chrono::high_resolution_clock::now();
 
@@ -814,7 +814,7 @@ int main(int argc, char * argv[]) {
             auto stopBsg = std::chrono::high_resolution_clock::now();
             auto durationBsg = stopBsg - startBsg;
             auto tBsg = std::chrono::duration_cast<std::chrono::milliseconds>(durationBsg).count();
-            std::printf("BSg Time:\t%ld milliseconds\n",tBsg);
+            std::printf("BSg Time:\t%lld milliseconds\n",static_cast<long long>(tBsg));
 
             bool equal;
             if (pmBsg == pmNTL) {

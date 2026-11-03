@@ -124,6 +124,15 @@ int main() {
                 check(ZZpXmultiply(a, b) == a * b, std::string("ZZ_pX random mod ") + ms + " #" + std::to_string(t));
             }
 
+            // Squaring path (same object on both sides) and ZZpXsqr
+            for (long t = 0; t < 60; ++t) {
+                ZZ_pX a;
+                random(a, 1 + RandomBnd(60));
+                if (IsZero(a)) continue;
+                check(ZZpXmultiply(a, a) == sqr(a), std::string("ZZ_pX a*a (same object) mod ") + ms + " #" + std::to_string(t));
+                check(ZZpXsqr(a) == sqr(a), std::string("ZZpXsqr mod ") + ms + " #" + std::to_string(t));
+            }
+
             // Coefficients of the product that lie in (X/2, p): e.g. (1 + x + ... + x^(k-1))^2
             // has middle coefficient k while the bound is max(U,V)*1*1 = k, so X < 2k.
             for (long k = 2; k <= 40; k += 7) {

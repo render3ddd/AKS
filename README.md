@@ -65,7 +65,7 @@ brew install gmp ntl
 brew list --versions gmp ntl    # expect gmp 6.3.0 and ntl 11.6.0 (or newer)
 ```
 
-Optionally, confirm that NTL was built with the GMP backend and thread boost, which `CongruenceZnxHPC.h` relies on for its parallel `NTL_EXEC_RANGE` loop:
+Optionally, confirm that NTL was built with the GMP backend and thread boost, which `CongruenceZnxHPC.h` relies on for its parallel `NTL_EXEC_INDEX` loop:
 
 ```bash
 cat > /tmp/ntlcheck.cpp <<'EOF'
@@ -91,7 +91,7 @@ clang++ -std=c++17 -I"$(brew --prefix)/include" -L"$(brew --prefix)/lib" /tmp/nt
 
 ### 4. Point the compiler at Homebrew
 
-Apple clang does not search `/opt/homebrew` by default. Either pass `-I`/`-L` flags on every build, or add these lines to `~/.zshrc` once so that plain `-lntl -lgmp` works:
+Apple clang does not search `/opt/homebrew` by default. The `Makefile` (step 6) adds the Homebrew paths itself, so this step is only needed for building by hand. Either pass `-I`/`-L` flags on every build, or add these lines to `~/.zshrc` once so that plain `-lntl -lgmp` works:
 
 ```bash
 export CPATH="$(brew --prefix)/include${CPATH:+:$CPATH}"
@@ -109,7 +109,15 @@ cd AKS
 
 ### 6. Build
 
-Run all commands from the **repository root**. The programs write their CSV logs to the relative paths `logs/Z/` and `logs/Znx/`.
+Run all commands from the **repository root**.
+
+```bash
+make            # builds devVR/LenstraZnx.out and devVR/LenstraZ.out
+make test       # 2,322 binary segmentation checks + an AKS sweep of n = 2..1000 against NTL's ProbPrime
+make clean
+```
+
+`make` compiles with `c++` (Apple clang on macOS); pass `CXX=clang++`, `CXX=g++` or any other compiler to choose. To build by hand instead (after step 4):
 
 ```bash
 # Zn[x] version (NTL PowerMod, parallel congruence tests)
@@ -122,62 +130,64 @@ clang++ -g -O2 -std=c++17 -pthread devVR/LenstraZ.cpp -o devVR/LenstraZ.out -lnt
 Changes from the dissertation's command:
 
 - `-march=native` is dropped. NTL and GMP already use Homebrew's arm64-tuned code, and the flag is aimed at x86 builds.
-- `-std=c++17` instead of `-std=c++11`. Both compile, but C++17 matches the `MacOS` profile in `.vscode/c_cpp_properties.json`.
+- `-std=c++17` instead of `-std=c++11`, matching the `MacOS` profile in `.vscode/c_cpp_properties.json`.
+- Add `-DAKS_VERBOSE=1` to print a line for every value of *a* tested (off by default because it slows the parallel loop).
 
-Expected compiler warnings: `-Wformat` (`%ld` with a `long long` chrono count), unused variables, and on `main` a `-Wvla-cxx-extension` warning from `biSegMultiplyZZpX.h`. They are harmless for building. The fix branch removes the VLA.
+Both programs, and every program in `test/`, build without warnings with `-Wall` under Clang (on macOS and Linux) and GCC.
 
 ### 7. Run
 
-```bash
-./devVR/LenstraZnx.out
-./devVR/LenstraZ.out
-```
-
-Check what each `main()` does before you run it:
-
-- On `main`, `LenstraZnx.cpp` loops over the four hard-coded 42-digit primes in `nos[]`. The dissertation reports about 3 h 45 min for **each one** in serial. For a quick smoke test, edit `nos[]` or use the fix branch.
-- On the fix branch, `LenstraZnx.out` reads *n* from standard input:
-
-  ```bash
-  echo 23456789 | ./devVR/LenstraZnx.out      # prints "23456789 is prime." in a few seconds
-  ```
-
-- `LenstraZ.cpp` (both branches) tests the hard-coded `n = 1003026954441971`. The binary segmentation version is very slow, so change `p` in `main()` to something small such as `23456789` for a first run.
-
-`CongruenceZnxHPC.h` sets the NTL thread pool to `std::thread::hardware_concurrency()`. On an M3 Pro that is 11 or 12, depending on the model, mixing performance and efficiency cores. Lower `ncores` when timing runs, to keep benchmarks consistent.
-
-### Running the correctness test
+Both programs take the same arguments:
 
 ```bash
-clang++ -O2 -std=c++17 -pthread test/biSegCorrectnessTest.cpp -o test/biSegCorrectnessTest.out -lntl -lgmp -lm
-./test/biSegCorrectnessTest.out             # expect: "1608 / 1608 checks passed", exit code 0
+./devVR/LenstraZnx.out [--theorem | --phi | --lambda] [n]
+./devVR/LenstraZ.out   [--theorem | --phi | --lambda] [n]
 ```
 
-This checks every binary segmentation routine against NTL's own arithmetic.
+- ***n*** is given as an argument, or read from standard input if omitted (`echo 23456789 | ./devVR/LenstraZnx.out`).
+- **Range of *a*.** `--theorem` (the default) tests 1 ≤ a ≤ ⌊√φ(r)·log₂ n⌋, the bound the AKS/Lenstra proof requires. `--phi` (a ≤ φ(r) − 1) and `--lambda` (a ≤ λ(r) − 1) reproduce the dissertation's Z and Zn[x] runs respectively; they are marked "not certified" in the output because the proof does not cover them.
+- **Exit status** is 0 if *n* is prime and 1 otherwise, so the programs can be used in scripts.
+- **Logs.** Each run that reaches a result appends to a timestamped CSV in `logs/Znx/` or `logs/Z/` (created if missing), recording n, the core count, the verdict, the time in milliseconds, r, φ(r), λ(r) and the range mode.
+
+Example:
+
+```bash
+./devVR/LenstraZnx.out 23456789
+#   r = 599
+#   Phi(599) = 598, Lambda(599) = 598
+#   Testing 1 <= a <= 598 (theorem: floor(sqrt(phi(r)) log2 n))
+#   ...
+#   23456789 is prime.
+```
+
+Rough run times on two cores (an M3 Pro will be faster): about 2 s (Zn[x]) and 3 s (Z) for 23456789, and about 5 s and 7 s for 1000000007. A 16-digit prime such as 1003026954441971 takes about 100 s with Zn[x]. Time grows quickly with the number of digits: the 42-digit primes from the dissertation (listed in a comment in `LenstraZnx.cpp`) need hours. These times are longer than the dissertation's for the same *n*, because the r the code now chooses is valid (and larger); see `REFACTOR.md` §1.2.
+
+The Zn[x] program runs its congruence tests on an NTL thread pool sized by `ncores` in `devVR/Cores.h` (`std::thread::hardware_concurrency()`, falling back to 1). On an M3 Pro that is 11 or 12, mixing performance and efficiency cores; lower it when timing runs, to keep benchmarks consistent.
+
+### 8. Tests
+
+`make test` runs:
+
+- `test/biSegCorrectnessTest.cpp`: every binary segmentation routine checked against NTL's own arithmetic (expect `2322 / 2322 checks passed`).
+- `test/aksSweep.sh`: `LenstraZnx.out` for every n from 2 to 1000, compared with NTL's `ProbPrime` (expect `aksSweep: 2..1000 all correct`). For a longer sweep, run `./test/aksSweep.sh 5000` after `make test` (which builds the reference checker it needs).
 
 ### VS Code Setup (optional)
 
+The repository's `.vscode/` folder is already set up for Apple Silicon:
+
+- `c_cpp_properties.json`: the `MacOS` profile looks for headers in `/opt/homebrew/include` and uses `/usr/bin/clang++`.
+- `launch.json`: `(lldb)` entries for macOS and `(gdb)` entries for Linux (GDB does not run on Apple Silicon). Each runs from the repository root, so the relative `logs/` paths resolve; the AKS programs are started with `23456789` as a sample argument.
+
+To use them:
+
 1. Install the **C/C++** (`ms-vscode.cpptools`) and **CodeLLDB** (`vadimcn.vscode-lldb`) extensions.
-2. In `.vscode/c_cpp_properties.json`, `MacOS` configuration: change `"/usr/local/include/**"` to `"/opt/homebrew/include/**"` (the Intel-Mac Homebrew path will not find NTL on Apple Silicon), and set `"compilerPath": "/usr/bin/clang++"`.
-3. `.vscode/launch.json` uses `"MIMode": "gdb"`, but GDB does not run on Apple Silicon. Use LLDB instead, for example:
-
-    ```json
-    {
-        "name": "LenstraZnx (lldb)",
-        "type": "lldb",
-        "request": "launch",
-        "program": "${workspaceFolder}/devVR/LenstraZnx.out",
-        "cwd": "${workspaceFolder}"
-    }
-    ```
-
-    Set `cwd` to the repository root (not `${fileDirname}`) so the relative `logs/` paths resolve.
+2. Build first with `make` (and `make test/unitTest.out` for the unit-test entry); the launch entries run the built `.out` files.
+3. Pick a configuration such as "LenstraZnx (lldb)" in the Run and Debug view.
 
 ### What does not build or run on a Mac
 
 - **CUDA.** NVIDIA's CUDA toolkit has not supported macOS since CUDA 10.2, and Apple Silicon has no NVIDIA GPU, so `CUDA/` and the `.cu` files are reference only. GPU work needs a Linux machine with an NVIDIA card. On Apple Silicon the native GPU route would be Metal, which is a separate port.
-- **`test/getHardwareTest.cpp`** includes the x86-only `<cpuid.h>`.
-- **`test/chronoTest.cpp`** is stale: it calls functions with signatures that no longer exist, and fails to compile on any platform.
+- **`test/getHardwareTest.cpp`** builds, but the CPU vendor query uses x86-only CPUID, so on Apple Silicon it reports only the thread count and working directory.
 - **`GallotY/AKSgallotMIRACL.cpp`** needs MIRACL, which is not packaged by Homebrew. The file is also in `.gitignore`.
 
 ### Troubleshooting
@@ -187,8 +197,8 @@ This checks every binary segmentation routine against NTL's own arithmetic.
 | `fatal error: 'NTL/ZZ.h' file not found` | Step 4 (`CPATH`) not applied, or pass `-I"$(brew --prefix)/include"`. |
 | `ld: library 'ntl' not found` | Step 4 (`LIBRARY_PATH`) not applied, or pass `-L"$(brew --prefix)/lib"`. |
 | `ld: warning: ignoring file ... built for macOS-x86_64` | Mixed Intel/arm64 toolchains: `uname -m` must be `arm64` and `brew --prefix` must be `/opt/homebrew`. |
-| Program runs but no CSV appears | Run from the repo root; `logs/Z` and `logs/Znx` must exist. |
-| "0 of 0 threads available" | `hardware_concurrency()` returned 0; set `ncores` manually in `CongruenceZnxHPC.h`. |
+| Program runs but no CSV appears | Logs are written relative to the current folder: run from the repo root. A warning on stderr means the log file could not be created there. |
+| "1 of 1 threads available" on a multi-core Mac | `hardware_concurrency()` returned 0, so `Cores.h` fell back to 1; set `ncores` manually in `devVR/Cores.h`. |
 
 ### Optional: building NTL from source (pinned version)
 
@@ -208,4 +218,4 @@ Then build with `-I"$HOME/opt/ntl-11.5.1/include" -L"$HOME/opt/ntl-11.5.1/lib"` 
 
 ### Linux
 
-On Debian/Ubuntu, `sudo apt install build-essential libgmp-dev libntl-dev` provides everything. The commands in steps 6–8 work unchanged with `g++` or `clang++`.
+On Debian/Ubuntu, `sudo apt install build-essential libgmp-dev libntl-dev` provides everything. The commands in steps 6–8 work unchanged, with `g++` or `clang++`.

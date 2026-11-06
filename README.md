@@ -219,3 +219,30 @@ Then build with `-I"$HOME/opt/ntl-11.5.1/include" -L"$HOME/opt/ntl-11.5.1/lib"` 
 ### Linux
 
 On Debian/Ubuntu, `sudo apt install build-essential libgmp-dev libntl-dev` provides everything. The commands in steps 6–8 work unchanged, with `g++` or `clang++`.
+
+---
+
+## Citing
+
+If you use this code, please cite it: see [`CITATION.cff`](CITATION.cff) (GitHub shows a "Cite this repository" button for it). The preferred citation is the dissertation.
+
+## Licence
+
+The author's own code and documentation in this repository are licensed under either of
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
+- MIT licence ([LICENSE-MIT](LICENSE-MIT))
+
+at your option. Both require the copyright notice, and so the author's credit, to be kept in copies. Releases up to and including `v1.1` were published under CC BY 4.0, and copies obtained under those terms keep them.
+
+**Third-party code is not covered** by this licence and remains under its authors' terms:
+
+| Path | Origin |
+|---|---|
+| `GallotY/` | Yves Gallot's AKS implementations ([source](http://yves.gallot.pagesperso-orange.fr/src/)), with local edits |
+| `BathAKS/` | Hua Li's AKS and Lenstra implementations (University of Bath), and adaptations of them |
+| `CUDA/NVIDIA_CUDA-11.4_Samples/` | NVIDIA CUDA samples, under NVIDIA's licence |
+
+NTL (LGPL-2.1-or-later) and GMP (LGPL-3.0-or-later / GPL-2.0-or-later) are linked, not included. Anyone distributing binaries must also meet those libraries' terms.
+
+Unless you explicitly state otherwise, any contribution you intentionally submit for inclusion in this work, as defined in the Apache-2.0 licence, shall be dual licensed as above, without any additional terms or conditions.

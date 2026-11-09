@@ -1,0 +1,43 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "AKS: C++ implementation of the Lenstra variant of the AKS primality test"
+type: software
+authors:
+  - family-names: Renders
+    given-names: Vincent J.
+    email: vince@render3d.tech
+repository-code: "https://github.com/render3d/AKS"
+license:
+  - MIT
+  - Apache-2.0
+abstract: >-
+  Two C++ implementations of the Lenstra (2002) variant of the
+  Agrawal-Kayal-Saxena deterministic primality test: a Zn[x] version using
+  NTL's polynomial arithmetic and a Z version using binary segmentation
+  (Kronecker substitution). Written for a 2021 University of Bath MSc
+  dissertation and corrected in 2026 (tag v1.1).
+keywords:
+  - AKS
+  - primality testing
+  - number theory
+  - binary segmentation
+  - NTL
+references:
+  - type: software
+    title: "aks2: the Lenstra variant of the AKS primality test in Rust"
+    authors:
+      - family-names: Renders
+        given-names: Vincent
+    repository-code: "https://github.com/render3d/AKS2"
+preferred-citation:
+  type: thesis
+  thesis-type: "MSc dissertation"
+  title: "Implementing alternative polynomial multiplication algorithms and the AKS primality test in parallel"
+  authors:
+    - family-names: Renders
+      given-names: Vincent J.
+  institution:
+    name: "University of Bath"
+  department: "Department of Computer Science"
+  year: 2021
+  month: 9
